@@ -7,38 +7,33 @@ namespace LegendaryTools.Graph
         where G : Tree<G, N>
         where N : Branch<G, N>
     {
-        public Tree(N newNode)
+        public Tree(N rootNode)
         {
-            newNode.Owner = this as G;
-            StartOrRootNode = newNode;
-            newNode.SetParent(null);
+            rootNode.Owner = this as G;
+            StartOrRootNode = rootNode;
+            rootNode.SetParent(null);
         }
 
-        public Tree(N newNode, N parentNode) : base(parentNode)
+        public Tree(N rootNode, N parentNode) : base(parentNode)
         {
-            newNode.Owner = this as G;
-            StartOrRootNode = newNode;
-            newNode.SetParent(null);
+            rootNode.Owner = this as G;
+            StartOrRootNode = rootNode;
+            rootNode.SetParent(null);
         }
 
-        public N DepthSearch(Predicate<N> match)
+        public N Find(Predicate<N> match)
         {
-            return null;
+            return StartOrRootNode.Find(match);
+        }
+        
+        public List<N> FindAll(Predicate<N> match)
+        {
+            return StartOrRootNode.FindAll(match);
         }
 
-        public N WidthSearch(Predicate<N> match)
+        public IEnumerator<N> GetAllChildrenEnumerator()
         {
-            return null;
-        }
-
-        public IEnumerator<N> GetDepthEnumerator()
-        {
-            throw new NotImplementedException();
-        }
-
-        public IEnumerator<N> GetWidthEnumerator()
-        {
-            throw new NotImplementedException();
+            return StartOrRootNode.GetAllChildrenEnumerator();
         }
     }
 }
