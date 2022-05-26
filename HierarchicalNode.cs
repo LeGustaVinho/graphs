@@ -71,13 +71,20 @@ namespace LegendaryTools.Graph
 
         public override bool Equals(object other)
         {
-            if (!other.GetType().IsSameOrSubclass(typeof(HierarchicalNode<G, N>)))
+            if (!IsSameOrSubclass(other.GetType(), 
+                    typeof(HierarchicalNode<G, N>)))
             {
                 return false;
             }
 
             HierarchicalNode<G, N> node = (HierarchicalNode<G, N>) other;
             return ID == node.ID;
+        }
+        
+        private bool IsSameOrSubclass(Type potentialDescendant, Type potentialBase)
+        {
+            return potentialDescendant.IsSubclassOf(potentialBase)
+                   || potentialDescendant == potentialBase;
         }
     }
 }

@@ -1,9 +1,7 @@
 {
     "name": "Graphs",
     "rootNamespace": "",
-    "references": [
-        "GUID:2247f345c1389cb428906dc038800b93"
-    ],
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
