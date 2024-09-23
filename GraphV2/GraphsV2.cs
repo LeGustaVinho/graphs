@@ -64,13 +64,16 @@ namespace LegendaryTools.GraphV2
         public bool IsDirectedCyclic { get; } //Also checks NodeConnectionDirection
         public bool IsAcyclic { get; } //Dont check NodeConnectionDirection
         public bool IsCyclic { get; } //Dont check NodeConnectionDirection
-        IGraph ParentGraph { get; set; }
-        IGraph ChildGraph { get; set; }
+        bool IsDirected { get; }
+        IGraph ParentGraph { get; }
+        IGraph[] ChildGraphs { get; }
         IGraph[] GraphHierarchy { get; } //Returns the hierarchy of this graph based on ParentGraph looking recursive until ParentGraph is null, in order
         INode[] AllNodes { get; } //Return all nodes only in this graph
         INode[] AllNodesRecursive { get; } //Return all nodes in this graph recursive in ChildGraph nodes
         void Add(INode newNode);
         bool Remove(INode node);
+        void AddGraph(IGraph child); //Add a graph children to this graph
+        void RemoveGraph(IGraph child);
         bool Contains(INode node);
         INode[] Neighbours(INode node);
     }
@@ -83,7 +86,7 @@ namespace LegendaryTools.GraphV2
         INodeConnection[] OutboundConnections { get; }
         INodeConnection[] InboundConnections { get; }
         int Count { get; }
-        INodeConnection ConnectTo(INode to, NodeConnectionDirection direction, float weight = 1);
+        INodeConnection ConnectTo(INode to, NodeConnectionDirection newDirection, float weight = 1);
         bool RemoveConnection(INodeConnection nodeConnection);
     }
     
@@ -92,6 +95,7 @@ namespace LegendaryTools.GraphV2
         public string Id { get; set; } //Guid
         public INode FromNode { get; set; }
         public INode ToNode { get; set; }
+        float Weight { get; set; }
         NodeConnectionDirection Direction { get; set; }
         void Disconnect();
     }

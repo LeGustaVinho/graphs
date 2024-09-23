@@ -24,7 +24,8 @@ namespace LegendaryTools.GraphV2
                     INode neighbour = null;
                     if (conn.Direction == NodeConnectionDirection.Unidirectional)
                     {
-                        neighbour = conn.ToNode;
+                        if(conn.ToNode != this)
+                            neighbour = conn.ToNode;
                     }
                     else
                     {
@@ -46,8 +47,23 @@ namespace LegendaryTools.GraphV2
                 List<INodeConnection> outbound = new List<INodeConnection>();
                 foreach (INodeConnection conn in Connections)
                 {
-                    if (conn.FromNode == this)
-                        outbound.Add(conn);
+                    switch (conn.Direction)
+                    {
+                        case NodeConnectionDirection.Unidirectional:
+                        {
+                            if (conn.FromNode == this)
+                                outbound.Add(conn);
+                            break;
+                        }
+                        case NodeConnectionDirection.Bidirectional:
+                        {
+                            if (conn.FromNode == this || conn.ToNode == this)
+                                outbound.Add(conn);
+                            break;
+                        }
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
                 }
                 return outbound.ToArray();
             }
@@ -60,8 +76,23 @@ namespace LegendaryTools.GraphV2
                 List<INodeConnection> inbound = new List<INodeConnection>();
                 foreach (INodeConnection conn in Connections)
                 {
-                    if (conn.ToNode == this)
-                        inbound.Add(conn);
+                    switch (conn.Direction)
+                    {
+                        case NodeConnectionDirection.Unidirectional:
+                        {
+                            if (conn.ToNode == this)
+                                inbound.Add(conn);
+                            break;
+                        }
+                        case NodeConnectionDirection.Bidirectional:
+                        {
+                            if (conn.FromNode == this || conn.ToNode == this)
+                                inbound.Add(conn);
+                            break;
+                        }
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
                 }
                 return inbound.ToArray();
             }
@@ -69,31 +100,60 @@ namespace LegendaryTools.GraphV2
 
         public int Count => Connections.Count;
 
-        public INodeConnection ConnectTo(INode to, NodeConnectionDirection direction, float weight = 1.0f)
+        public INodeConnection ConnectTo(INode to, NodeConnectionDirection newDirection, float weight = 1.0f)
         {
             if (to == null) throw new ArgumentNullException(nameof(to));
             if (Equals(to)) throw new InvalidOperationException("Cannot connect node to itself.");
-
-            INodeConnection existingConnection = null;
-
+            if (!Enum.IsDefined(typeof(NodeConnectionDirection), newDirection)) throw new ArgumentException($"{newDirection} is not a valid enum type for {nameof(NodeConnectionDirection)}");
+            
+            INode from = this;
             foreach (INodeConnection conn in Connections)
             {
-                bool condition1 = conn.ToNode == to && conn.FromNode == this;
-                bool condition2 = conn.Direction == NodeConnectionDirection.Bidirectional &&
-                                  conn.FromNode == to && conn.ToNode == this;
-
-                if (condition1 || condition2)
+                bool isSameNodes = conn.ToNode == to && conn.FromNode == from; //Same nodes
+                bool isInversedNode = conn.FromNode == to && conn.ToNode == from;
+                switch (newDirection)
                 {
-                    existingConnection = conn;
-                    break;
+                    case NodeConnectionDirection.Unidirectional
+                        when conn.Direction == NodeConnectionDirection.Unidirectional:
+                    {
+                        if (isSameNodes) return conn; //Is exact the same
+                        if (isInversedNode)
+                        {
+                            //Update current connection to Bidirectional
+                            conn.Direction = NodeConnectionDirection.Bidirectional;
+                            return conn;
+                        }
+                        break;
+                    }
+                    case NodeConnectionDirection.Unidirectional
+                        when conn.Direction == NodeConnectionDirection.Bidirectional:
+                    {
+                        if (isSameNodes || isInversedNode) return conn; //Redundant connection
+                        break;
+                    }
+                    case NodeConnectionDirection.Bidirectional
+                        when conn.Direction == NodeConnectionDirection.Unidirectional:
+                    {
+                        if (isSameNodes || isInversedNode)
+                        {
+                            //Update current connection to Bidirectional
+                            conn.Direction = NodeConnectionDirection.Bidirectional;
+                            return conn;
+                        }
+                        break;
+                    }
+                    case NodeConnectionDirection.Bidirectional
+                        when conn.Direction == NodeConnectionDirection.Bidirectional:
+                    {
+                        if (isSameNodes || isInversedNode) return conn; //Redundant connection
+                        break;
+                    }
+                    default:
+                        throw new ArgumentOutOfRangeException();
                 }
             }
 
-            if (existingConnection != null)
-                // Optionally update the existing connection
-                return existingConnection;
-
-            NodeConnection connection = new NodeConnection(this, to, direction, weight);
+            NodeConnection connection = new NodeConnection(this, to, newDirection, weight);
             Connections.Add(connection);
             to.Connections.Add(connection);
             return connection;
@@ -103,8 +163,7 @@ namespace LegendaryTools.GraphV2
         {
             if (Connections.Remove(nodeConnection))
             {
-                if (nodeConnection.Direction == NodeConnectionDirection.Bidirectional)
-                    nodeConnection.ToNode.RemoveConnection(nodeConnection);
+                nodeConnection.ToNode.RemoveConnection(nodeConnection);
                 return true;
             }
 

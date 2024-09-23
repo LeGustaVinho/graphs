@@ -7,29 +7,55 @@ namespace LegendaryTools.GraphV2
     public class Graph : IGraph
     {
         public string Id { get; set; }
-        public IGraph ParentGraph { get; set; }
-        public IGraph ChildGraph { get; set; }
         private readonly List<INode> nodes;
+        private readonly List<IGraph> childGraphs;
+        private IGraph parentGraph;
 
         public Graph()
         {
             Id = Guid.NewGuid().ToString();
             nodes = new List<INode>();
+            childGraphs = new List<IGraph>();
         }
 
-        public bool IsDirectedAcyclic => IsDirected && !HasDirectedCycle();
-        public bool IsDirectedCyclic => IsDirected && HasDirectedCycle();
-        public bool IsAcyclic => !HasCycle();
-        public bool IsCyclic => HasCycle();
+        /// <summary>
+        /// Check if all connections are Bidirectional and dont have cycle
+        /// </summary>
+        public bool IsDirectedAcyclic => IsDirected && !IsCyclic;
+        public bool IsDirectedCyclic => IsDirected && IsCyclic;
+        public bool IsAcyclic => !IsCyclic;
+        
+        public bool IsCyclic => IsDirected ? HasCycleDirected() : HasCycleUndirected();
 
-        private bool IsDirected
+        public bool IsDirected
         {
             get
             {
-                return nodes.Any(node =>
-                    node.Connections.Any(conn => conn.Direction == NodeConnectionDirection.Unidirectional));
+                foreach (INode node in nodes)
+                {
+                    foreach (INodeConnection conn in node.Connections)
+                    {
+                        if (conn.Direction == NodeConnectionDirection.Unidirectional)
+                            return true;
+                    }
+                }
+                return false;
             }
         }
+
+        /// <summary>
+        /// Gets or sets the parent graph. Setting is internal to prevent external modification.
+        /// </summary>
+        public IGraph ParentGraph
+        {
+            get => parentGraph;
+            private set => parentGraph = value;
+        }
+
+        /// <summary>
+        /// Gets the child graphs as an array.
+        /// </summary>
+        public IGraph[] ChildGraphs => childGraphs.ToArray();
 
         public IGraph[] GraphHierarchy
         {
@@ -49,22 +75,42 @@ namespace LegendaryTools.GraphV2
 
         public INode[] AllNodes => nodes.ToArray();
 
+        /// <summary>
+        /// Gets all nodes in this graph and recursively in all child graphs.
+        /// </summary>
         public INode[] AllNodesRecursive
         {
             get
             {
-                List<INode> allNodes = new List<INode>(nodes);
-                IGraph child = ChildGraph;
-                while (child != null)
-                {
-                    allNodes.AddRange(child.AllNodes);
-                    child = child.ChildGraph;
-                }
-
+                HashSet<string> seenNodes = new HashSet<string>();
+                List<INode> allNodes = new List<INode>();
+                CollectAllNodesRecursive(this, allNodes, seenNodes);
                 return allNodes.ToArray();
             }
         }
+        
+        /// <summary>
+        /// Recursively collects all nodes from the graph and its children.
+        /// </summary>
+        /// <param name="graph">The graph to collect nodes from.</param>
+        /// <param name="allNodes">The list to accumulate nodes.</param>
+        /// <param name="seenNodes">A set to track already seen nodes to prevent duplicates.</param>
+        private void CollectAllNodesRecursive(IGraph graph, List<INode> allNodes, HashSet<string> seenNodes)
+        {
+            foreach (var node in graph.AllNodes)
+            {
+                if (seenNodes.Add(node.Id))
+                {
+                    allNodes.Add(node);
+                }
+            }
 
+            foreach (var child in graph.ChildGraphs)
+            {
+                CollectAllNodesRecursive(child, allNodes, seenNodes);
+            }
+        }
+        
         public void Add(INode newNode)
         {
             if (newNode == null) throw new ArgumentNullException(nameof(newNode));
@@ -73,13 +119,82 @@ namespace LegendaryTools.GraphV2
 
         public virtual bool Remove(INode node)
         {
+            if (node == null) throw new ArgumentNullException(nameof(node));
             if (nodes.Remove(node))
             {
                 // Remove all connections related to this node
-                foreach (INodeConnection conn in node.Connections.ToList()) conn.Disconnect();
+                List<INodeConnection> connectionsCopy = new List<INodeConnection>(node.Connections);
+                foreach (INodeConnection conn in connectionsCopy)
+                {
+                    conn.Disconnect();
+                }
                 return true;
             }
 
+            return false;
+        }
+
+        /// <summary>
+        /// Adds a child graph to this graph.
+        /// </summary>
+        /// <param name="child">The child graph to add.</param>
+        public void AddGraph(IGraph child)
+        {
+            if (child == null) throw new ArgumentNullException(nameof(child));
+            if (child == this) throw new InvalidOperationException("A graph cannot be a child of itself.");
+            if (child.ParentGraph != null)
+                throw new InvalidOperationException("The child graph already has a parent.");
+
+            // Prevent circular hierarchy
+            if (IsDescendantOf(child))
+                throw new InvalidOperationException("Adding this child would create a circular hierarchy.");
+
+            childGraphs.Add(child);
+            if (child is Graph childGraph)
+            {
+                childGraph.ParentGraph = this;
+            }
+            else
+            {
+                throw new ArgumentException("Child graph must be of type Graph.", nameof(child));
+            }
+        }
+
+        /// <summary>
+        /// Removes a child graph from this graph.
+        /// </summary>
+        /// <param name="child">The child graph to remove.</param>
+        public void RemoveGraph(IGraph child)
+        {
+            if (child == null) throw new ArgumentNullException(nameof(child));
+            if (childGraphs.Remove(child))
+            {
+                if (child is Graph childGraph)
+                {
+                    childGraph.ParentGraph = null;
+                }
+            }
+            else
+            {
+                throw new ArgumentException("The specified graph is not a child of this graph.", nameof(child));
+            }
+        }
+        
+        /// <summary>
+        /// Checks if the current graph is a descendant of the potentialAncestor graph.
+        /// Used to prevent circular hierarchies.
+        /// </summary>
+        /// <param name="potentialAncestor">The graph to check against.</param>
+        /// <returns>True if the current graph is a descendant; otherwise, false.</returns>
+        private bool IsDescendantOf(IGraph potentialAncestor)
+        {
+            IGraph current = this.ParentGraph;
+            while (current != null)
+            {
+                if (current == potentialAncestor)
+                    return true;
+                current = current.ParentGraph;
+            }
             return false;
         }
 
@@ -93,56 +208,79 @@ namespace LegendaryTools.GraphV2
             if (!nodes.Contains(node)) throw new ArgumentException("Node does not exist in the graph.");
             return node.Neighbours;
         }
-
-        private bool HasCycle()
+        
+        private bool HasCycleDirected()
         {
             HashSet<INode> visited = new HashSet<INode>();
-            HashSet<INode> recursionStack = new HashSet<INode>();
+            HashSet<INode> recStack = new HashSet<INode>();
 
-            foreach (INode node in nodes)
-                if (DetectCycle(node, visited, recursionStack, false))
+            foreach (var node in nodes)
+            {
+                if (DFSDirected(node, visited, recStack))
                     return true;
+            }
+
             return false;
         }
 
-        private bool HasDirectedCycle()
-        {
-            HashSet<INode> visited = new HashSet<INode>();
-            HashSet<INode> recursionStack = new HashSet<INode>();
-
-            foreach (INode node in nodes)
-                if (DetectCycle(node, visited, recursionStack, true))
-                    return true;
-            return false;
-        }
-
-        private bool DetectCycle(INode node, HashSet<INode> visited, HashSet<INode> recursionStack, bool checkDirection)
+        private bool DFSDirected(INode node, HashSet<INode> visited, HashSet<INode> recStack)
         {
             if (!visited.Contains(node))
             {
                 visited.Add(node);
-                recursionStack.Add(node);
+                recStack.Add(node);
 
-                foreach (INode neighbor in node.Neighbours)
+                foreach (var conn in node.OutboundConnections)
                 {
-                    IEnumerable<INodeConnection> connections = node.Connections.Where(conn => conn.ToNode == neighbor ||
-                        (conn.Direction == NodeConnectionDirection.Bidirectional && conn.FromNode == neighbor));
-
-                    foreach (INodeConnection conn in connections)
-                    {
-                        if (checkDirection && conn.Direction != NodeConnectionDirection.Unidirectional)
-                            continue;
-
-                        if (!visited.Contains(neighbor) &&
-                            DetectCycle(neighbor, visited, recursionStack, checkDirection))
-                            return true;
-                        if (recursionStack.Contains(neighbor))
-                            return true;
-                    }
+                    var neighbor = conn.ToNode;
+                    if (!visited.Contains(neighbor) && DFSDirected(neighbor, visited, recStack))
+                        return true;
+                    else if (recStack.Contains(neighbor))
+                        return true;
                 }
             }
 
-            recursionStack.Remove(node);
+            recStack.Remove(node);
+            return false;
+        }
+
+        private bool HasCycleUndirected()
+        {
+            HashSet<INode> visited = new HashSet<INode>();
+
+            foreach (var node in nodes)
+            {
+                if (!visited.Contains(node))
+                {
+                    if (DFSUndirected(node, visited, null))
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool DFSUndirected(INode node, HashSet<INode> visited, INode parent)
+        {
+            visited.Add(node);
+
+            foreach (var conn in node.OutboundConnections.Concat(node.InboundConnections))
+            {
+                var neighbor = conn.Direction == NodeConnectionDirection.Unidirectional ? conn.ToNode : 
+                    (conn.FromNode == node ? conn.ToNode : conn.FromNode);
+                if (neighbor == null) continue;
+
+                if (!visited.Contains(neighbor))
+                {
+                    if (DFSUndirected(neighbor, visited, node))
+                        return true;
+                }
+                else if (!neighbor.Equals(parent))
+                {
+                    return true;
+                }
+            }
+
             return false;
         }
     }
