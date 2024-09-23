@@ -8,6 +8,8 @@ namespace LegendaryTools.GraphV2
     {
         public ITreeNode RootNode { get; protected set; }
 
+        public override bool IsDirected => RootNode == null || base.IsDirected;
+
         public int Height
         {
             get

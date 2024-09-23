@@ -433,10 +433,8 @@ namespace LegendaryTools.GraphV2.Tests
         public void AddingSameNodeMultipleTimes_ShouldOnlyAddOnce()
         {
             graph.Add(nodeA);
-            graph.Add(nodeA);
-            graph.Add(nodeA);
 
-            Assert.AreEqual(1, graph.AllNodes.Length, "Adding the same node multiple times should only add it once.");
+            Assert.Throws<InvalidOperationException>(() => graph.Add(nodeA), "Adding the same node multiple times should only add it once and thow error");
         }
 
         [Test]
