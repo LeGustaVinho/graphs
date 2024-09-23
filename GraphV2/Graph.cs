@@ -27,10 +27,15 @@ namespace LegendaryTools.GraphV2
         
         public bool IsCyclic => IsDirected ? HasCycleDirected() : HasCycleUndirected();
 
-        public bool IsDirected
+        public virtual bool IsDirected
         {
             get
             {
+                if (nodes.Count == 1 && nodes[0].Connections.Count == 0)
+                {
+                    return true;
+                }
+                
                 foreach (INode node in nodes)
                 {
                     foreach (INodeConnection conn in node.Connections)
@@ -114,6 +119,9 @@ namespace LegendaryTools.GraphV2
         public void Add(INode newNode)
         {
             if (newNode == null) throw new ArgumentNullException(nameof(newNode));
+            if (nodes.Find(item => item.Id == newNode.Id) != null) 
+                throw new InvalidOperationException($"Already contains id {newNode.Id}");
+            
             if (!nodes.Contains(newNode)) nodes.Add(newNode);
         }
 
