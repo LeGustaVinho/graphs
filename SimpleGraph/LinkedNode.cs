@@ -12,6 +12,8 @@ namespace LegendaryTools.Graph
         int Count { get; }
     }
 
+    
+
     public abstract class LinkedNode<G, N, NC, C> : HierarchicalNode<G, N>, INode<N>, IEnumerable<NC>
         where G : LinkedGraph<G, N, NC, C>
         where N : LinkedNode<G, N, NC, C>

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 
 namespace LegendaryTools.Graph
 {
+    
+    
     public class HierarchicalNode<G, N>
         where G : HierarchicalGraph<G, N>
         where N : HierarchicalNode<G, N>
