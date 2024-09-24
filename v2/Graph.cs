@@ -121,8 +121,14 @@ namespace LegendaryTools.GraphV2
             if (newNode == null) throw new ArgumentNullException(nameof(newNode));
             if (nodes.Find(item => item.Id == newNode.Id) != null) 
                 throw new InvalidOperationException($"Already contains id {newNode.Id}");
-            
-            if (!nodes.Contains(newNode)) nodes.Add(newNode);
+            if (newNode.Owner != null)
+                throw new InvalidOperationException($"Node  {newNode.Id} already in a graph {newNode.Owner.Id}");
+
+            if (!nodes.Contains(newNode))
+            {
+                nodes.Add(newNode);
+                newNode.SetOwner(this);
+            }
         }
 
         public virtual bool Remove(INode node)

@@ -47,6 +47,7 @@ namespace LegendaryTools.GraphV2
                     ParentNode.ChildNodes.Remove(this);
                     ParentNode = null;
                 }
+                Owner = null;
             }
         }
 

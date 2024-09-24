@@ -308,33 +308,6 @@ namespace LegendaryTools.GraphV2.Tests
         }
 
         [Test]
-        public void AllNodesRecursive_ShouldNotContainDuplicatesWhenNodesAreSharedAcrossChildGraphs()
-        {
-            graph.Add(nodeA);
-            graph.Add(nodeB);
-
-            Graph childGraph1 = new Graph();
-            Graph childGraph2 = new Graph();
-
-            childGraph1.Add(nodeC);
-            childGraph1.Add(nodeD);
-            childGraph2.Add(nodeD); // nodeD is shared
-            childGraph2.Add(nodeE);
-
-            graph.AddGraph(childGraph1);
-            graph.AddGraph(childGraph2);
-
-            var allNodesRecursive = graph.AllNodesRecursive;
-
-            Assert.AreEqual(5, allNodesRecursive.Length, "AllNodesRecursive should include all unique nodes from the graph and its child graphs.");
-            CollectionAssert.Contains(allNodesRecursive, nodeA, "AllNodesRecursive should contain nodeA.");
-            CollectionAssert.Contains(allNodesRecursive, nodeB, "AllNodesRecursive should contain nodeB.");
-            CollectionAssert.Contains(allNodesRecursive, nodeC, "AllNodesRecursive should contain nodeC.");
-            CollectionAssert.Contains(allNodesRecursive, nodeD, "AllNodesRecursive should contain nodeD.");
-            CollectionAssert.Contains(allNodesRecursive, nodeE, "AllNodesRecursive should contain nodeE.");
-        }
-
-        [Test]
         public void ConnectNodes_WithDifferentWeights_ShouldSetWeightsCorrectly()
         {
             graph.Add(nodeA);
@@ -958,33 +931,6 @@ namespace LegendaryTools.GraphV2.Tests
         }
 
         [Test]
-        public void AllNodesRecursive_ShouldReturnUniqueNodes()
-        {
-            graph.Add(nodeA);
-            graph.Add(nodeB);
-
-            Graph childGraph1 = new Graph();
-            Graph childGraph2 = new Graph();
-
-            childGraph1.Add(nodeC);
-            childGraph1.Add(nodeD);
-            childGraph2.Add(nodeC); // nodeC is added again to childGraph2
-            childGraph2.Add(nodeE);
-
-            graph.AddGraph(childGraph1);
-            graph.AddGraph(childGraph2);
-
-            var allNodesRecursive = graph.AllNodesRecursive;
-
-            Assert.AreEqual(5, allNodesRecursive.Length, "AllNodesRecursive should include each unique node only once.");
-            CollectionAssert.Contains(allNodesRecursive, nodeA, "AllNodesRecursive should contain nodeA.");
-            CollectionAssert.Contains(allNodesRecursive, nodeB, "AllNodesRecursive should contain nodeB.");
-            CollectionAssert.Contains(allNodesRecursive, nodeC, "AllNodesRecursive should contain nodeC.");
-            CollectionAssert.Contains(allNodesRecursive, nodeD, "AllNodesRecursive should contain nodeD.");
-            CollectionAssert.Contains(allNodesRecursive, nodeE, "AllNodesRecursive should contain nodeE.");
-        }
-
-        [Test]
         public void Neighbours_ShouldReturnEmptyArrayForIsolatedNode()
         {
             graph.Add(nodeA);
@@ -1189,18 +1135,8 @@ namespace LegendaryTools.GraphV2.Tests
             childGraph1.Add(nodeA);
             childGraph1.Add(nodeB);
 
-            childGraph2.Add(nodeB); // nodeB is shared
-            childGraph2.Add(nodeC);
-
-            graph.AddGraph(childGraph1);
-            graph.AddGraph(childGraph2);
-
-            var allNodesRecursive = graph.AllNodesRecursive;
-
-            Assert.AreEqual(3, allNodesRecursive.Length, "AllNodesRecursive should include nodeA, nodeB, and nodeC without duplicates.");
-            CollectionAssert.Contains(allNodesRecursive, nodeA, "AllNodesRecursive should contain nodeA.");
-            CollectionAssert.Contains(allNodesRecursive, nodeB, "AllNodesRecursive should contain nodeB.");
-            CollectionAssert.Contains(allNodesRecursive, nodeC, "AllNodesRecursive should contain nodeC.");
+             // nodeB is shared
+             Assert.Throws<InvalidOperationException>(() => childGraph2.Add(nodeB), "Nodes cannot be shared");
         }
 
         [Test]

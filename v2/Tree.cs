@@ -61,7 +61,7 @@ namespace LegendaryTools.GraphV2
             }
         }
 
-        public bool RemoveTreeNode(ITreeNode node, out ITreeNode[] removedNodes)
+        public virtual bool RemoveTreeNode(ITreeNode node, out ITreeNode[] removedNodes)
         {
             removedNodes = Array.Empty<ITreeNode>();
             if (node == null) return false;
@@ -96,8 +96,9 @@ namespace LegendaryTools.GraphV2
         private ITreeNode DepthFirstSearch(ITreeNode node, Predicate<INode> predicate)
         {
             if (node == null) return null;
+            if (predicate == null) throw new ArgumentNullException(nameof(predicate));
             if (predicate(node)) return node;
-
+            
             foreach (ITreeNode child in node.ChildNodes)
             {
                 ITreeNode result = DepthFirstSearch(child, predicate);
@@ -110,6 +111,7 @@ namespace LegendaryTools.GraphV2
         public ITreeNode HeightFirstSearch(Predicate<INode> predicate)
         {
             if (RootNode == null) return null;
+            if (predicate == null) throw new ArgumentNullException(nameof(predicate));
             Queue<ITreeNode> queue = new Queue<ITreeNode>();
             queue.Enqueue(RootNode);
 

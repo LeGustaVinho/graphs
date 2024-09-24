@@ -33,6 +33,7 @@ namespace LegendaryTools.GraphV2
     public interface IBinaryTree : ITree
     {
         void AddTreeNode(IBinaryTreeNode newNode, IBinaryTreeNode parentNode, float weight = 1); //Adds a node to the Binary Tree, validating the graph as Binary Tree
+        bool RemoveBinaryTreeNode(IBinaryTreeNode node, out ITreeNode[] removedNodes);
         IBinaryTreeNode BinarySearch(Predicate<INode> predicate);
     }
 
@@ -82,12 +83,14 @@ namespace LegendaryTools.GraphV2
     {
         public string Id { get; set; } //Guid
         INode[] Neighbours { get; }
+        IGraph Owner { get; }
         List<INodeConnection> Connections { get; }
         INodeConnection[] OutboundConnections { get; }
         INodeConnection[] InboundConnections { get; }
         int Count { get; }
         INodeConnection ConnectTo(INode to, NodeConnectionDirection newDirection, float weight = 1);
         bool RemoveConnection(INodeConnection nodeConnection);
+        internal void SetOwner(IGraph owner);
     }
     
     public interface INodeConnection

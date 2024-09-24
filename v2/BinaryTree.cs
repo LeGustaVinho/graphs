@@ -13,6 +13,7 @@ namespace LegendaryTools.GraphV2
         public void AddTreeNode(IBinaryTreeNode newNode, IBinaryTreeNode parentNode, float weight = 1)
         {
             if (newNode == null) throw new ArgumentNullException(nameof(newNode));
+            if (newNode == parentNode) throw new InvalidOperationException(nameof(newNode));
 
             if (parentNode == null)
             {
@@ -47,7 +48,7 @@ namespace LegendaryTools.GraphV2
             if (!IsDirectedAcyclic || IsCyclic)
             {
                 // Undo addition
-                Remove(newNode);
+                RemoveBinaryTreeNode(newNode, out ITreeNode[] removedNodes);
                 if (parentNode != null) newNode.DisconnectFromParent();
                 if (parentNode == null) RootNode = null;
                 throw new InvalidOperationException("Adding this node violates Binary Tree properties.");
@@ -92,13 +93,18 @@ namespace LegendaryTools.GraphV2
         /// </summary>
         /// <param name="node">The node to remove.</param>
         /// <returns>True if the node was removed; otherwise, false.</returns>
-        public override bool Remove(INode node)
+        public bool RemoveBinaryTreeNode(IBinaryTreeNode node, out ITreeNode[] removedNodes)
         {
-            if (!(node is IBinaryTreeNode binaryNode))
-                throw new InvalidOperationException("Only BinaryTreeNode instances can be removed.");
-
+            BinaryTreeNode binaryTreeNode = node as BinaryTreeNode;
+            if(binaryTreeNode == null) throw new InvalidOperationException("Nodes must be of type BinaryTreeNode.");
+            if (!Contains(node))
+            {
+                removedNodes = Array.Empty<ITreeNode>();
+                return false;
+            }
+            node.DisconnectFromParent();
             // Remove the node and its subtree
-            bool result = RemoveTreeNode(binaryNode, out ITreeNode[] removedNodes);
+            bool result = RemoveTreeNode(node, out removedNodes);
             return result;
         }
     }

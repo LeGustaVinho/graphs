@@ -25,7 +25,6 @@ namespace LegendaryTools.GraphV2
             INodeConnection connection = ConnectToParent(parent, weight);
             if (connection != null)
             {
-                Left = this;
                 // Ensure bidirectional reference in the parent
                 if (!(parent is BinaryTreeNode binaryParent))
                     throw new InvalidOperationException("Parent node must be of type BinaryTreeNode.");
@@ -52,7 +51,6 @@ namespace LegendaryTools.GraphV2
             INodeConnection connection = ConnectToParent(parent, weight);
             if (connection != null)
             {
-                Right = this;
                 // Ensure bidirectional reference in the parent
                 if (!(parent is BinaryTreeNode binaryParent))
                     throw new InvalidOperationException("Parent node must be of type BinaryTreeNode.");
@@ -105,6 +103,8 @@ namespace LegendaryTools.GraphV2
                     ParentNode.ChildNodes.Remove(this);
                     ParentNode = null;
                 }
+
+                Owner = null;
             }
         }
     }

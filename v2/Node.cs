@@ -7,6 +7,7 @@ namespace LegendaryTools.GraphV2
     {
         public string Id { get; set; }
         public List<INodeConnection> Connections { get; }
+        public IGraph Owner { get; set; }
 
         public Node()
         {
@@ -168,6 +169,11 @@ namespace LegendaryTools.GraphV2
             }
 
             return false;
+        }
+
+        void INode.SetOwner(IGraph owner)
+        {
+            Owner = owner;
         }
     }
 }
