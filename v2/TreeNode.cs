@@ -6,7 +6,7 @@ namespace LegendaryTools.GraphV2
 {
     public class TreeNode : Node, ITreeNode
     {
-        public ITreeNode ParentNode { get; protected set; }
+        public ITreeNode ParentNode { get;  set; }
         public List<ITreeNode> ChildNodes { get; set; }
 
         public TreeNode()

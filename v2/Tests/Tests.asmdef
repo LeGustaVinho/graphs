@@ -1,5 +1,5 @@
 {
-    "name": "Tests",
+    "name": "LegendaryTools.Graphs.Tests",
     "rootNamespace": "",
     "references": [
         "UnityEngine.TestRunner",

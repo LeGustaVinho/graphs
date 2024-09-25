@@ -1,201 +1,373 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace LegendaryTools.GraphV2
 {
-    public class SelfBalanceTree<T> : Tree, ISelfBalanceTree<T>
-        where T : IComparable<T>
+    public class SelfBalanceTree<T> : Tree, ISelfBalanceTree<T> where T : IComparable<T>
     {
+        public int Degree { get; }
         public IComparer<T> OverrideComparer { get; set; }
-
-        private readonly int degree;
 
         public SelfBalanceTree(int degree)
         {
             if (degree < 2)
                 throw new ArgumentException("Degree must be at least 2.");
-
-            this.degree = degree;
-            OverrideComparer = Comparer<T>.Default;
+            Degree = degree;
         }
 
-        /// <summary>
-        ///     Inserts a new node into the B-Tree.
-        /// </summary>
-        /// <param name="newNode">The node to insert.</param>
-        /// <param name="parentNode">The parent node. If null, the node is inserted at the root.</param>
-        /// <param name="weight">Optional weight for the connection.</param>
         public void AddSelfBalanceTreeNode(ISelfBalanceTreeNode<T> newNode, ISelfBalanceTreeNode<T> parentNode,
             float weight = 1)
         {
+            if (newNode == null) throw new ArgumentNullException(nameof(newNode));
+            T key = newNode.Key;
+
             if (RootNode == null)
             {
-                RootNode = newNode;
-                Add(newNode);
-                return;
-            }
-
-            SelfBalanceTreeNode<T> currentNode = RootNode as SelfBalanceTreeNode<T>;
-
-            if (currentNode.IsFull)
-            {
-                // Create a new root
-                SelfBalanceTreeNode<T> newRoot = new SelfBalanceTreeNode<T>(degree);
-                Add(newRoot);
-                newRoot.ConnectToParent(currentNode, weight);
-                SplitChild(newRoot, 0, currentNode);
-                InsertNonFull(newRoot, newNode);
-                RootNode = newRoot;
+                SelfBalanceTreeNode<T> rootNode = new SelfBalanceTreeNode<T>(Degree);
+                rootNode.Keys.Add(key);
+                RootNode = rootNode;
+                Add(rootNode);
             }
             else
             {
-                InsertNonFull(currentNode, newNode);
+                SelfBalanceTreeNode<T> root = (SelfBalanceTreeNode<T>)RootNode;
+                if (root.Keys.Count == 2 * Degree - 1)
+                {
+                    SelfBalanceTreeNode<T> newRoot = new SelfBalanceTreeNode<T>(Degree);
+                    RootNode = newRoot;
+                    Add(newRoot);
+                    newRoot.ChildNodes.Add(root);
+                    root.ParentNode = newRoot;
+                    SplitChild(newRoot, 0, root);
+                    InsertNonFull(newRoot, key);
+                }
+                else
+                {
+                    InsertNonFull(root, key);
+                }
             }
         }
 
-        /// <summary>
-        ///     Inserts a node into a non-full node.
-        /// </summary>
-        /// <param name="node">The node to insert into.</param>
-        /// <param name="newNode">The node to insert.</param>
-        private void InsertNonFull(ISelfBalanceTreeNode<T> node, ISelfBalanceTreeNode<T> newNode)
+        private void SplitChild(SelfBalanceTreeNode<T> parentNode, int index, SelfBalanceTreeNode<T> fullChildNode)
         {
-            int i = node.Keys.Count - 1;
+            int t = Degree;
+            SelfBalanceTreeNode<T> newChild = new SelfBalanceTreeNode<T>(t);
+            Add(newChild);
+            newChild.ParentNode = parentNode;
 
-            if (node.IsLeaf)
+            // Move keys
+            for (int j = 0; j < t - 1; j++)
             {
-                node.InsertKey(newNode.Data);
-                return;
+                newChild.Keys.Add(fullChildNode.Keys[t]);
+                fullChildNode.Keys.RemoveAt(t);
             }
 
-            // Find the child which is going to have the new key
-            while (i >= 0 && OverrideComparer.Compare(newNode.Data, node.Keys[i]) < 0)
-                i--;
-
-            i++;
-
-            SelfBalanceTreeNode<T> child = node.ChildNodes[i] as SelfBalanceTreeNode<T>;
-
-            if (child.IsFull)
-            {
-                SplitChild(node, i, child);
-
-                if (OverrideComparer.Compare(newNode.Data, node.Keys[i]) > 0)
-                    i++;
-            }
-
-            child = node.ChildNodes[i] as SelfBalanceTreeNode<T>;
-
-            InsertNonFull(child, newNode);
-        }
-
-        /// <summary>
-        ///     Splits the full child node into two and adjusts the parent node.
-        /// </summary>
-        /// <param name="parent">The parent node.</param>
-        /// <param name="index">The index of the child in the parent.</param>
-        /// <param name="child">The full child node to split.</param>
-        private void SplitChild(ISelfBalanceTreeNode<T> parent, int index, ISelfBalanceTreeNode<T> child)
-        {
-            // Create a new node which will store (degree-1) keys of child
-            SelfBalanceTreeNode<T> newChild = new SelfBalanceTreeNode<T>(degree);
-            for (int j = 0; j < degree - 1; j++) newChild.Keys.Add(child.Keys[j + degree]);
-
-            // If child is not leaf, move the last degree children to newChild
-            if (!child.IsLeaf)
-            {
-                foreach (ITreeNode grandChild in child.ChildNodes.Skip(degree))
-                    newChild.ConnectToParent(grandChild as SelfBalanceTreeNode<T>);
-
-                // Remove the moved children from the original child
-                child.ChildNodes = child.ChildNodes.Take(degree).ToList();
-            }
-
-            // Reduce the number of keys in child
-            child.Keys = child.Keys.Take(degree - 1).ToList();
-
-            // Insert a new key into parent
-            parent.InsertKey(child.Keys[degree - 1]);
+            // Move child pointers if not leaf
+            if (!fullChildNode.IsLeaf)
+                for (int j = 0; j < t; j++)
+                {
+                    SelfBalanceTreeNode<T> child = (SelfBalanceTreeNode<T>)fullChildNode.ChildNodes[t];
+                    fullChildNode.ChildNodes.RemoveAt(t);
+                    newChild.ChildNodes.Add(child);
+                    child.ParentNode = newChild;
+                }
 
             // Insert new child into parent
-            AddChild(parent, newChild);
+            parentNode.ChildNodes.Insert(index + 1, newChild);
 
-            // Connect newChild to parent
-            newChild.ConnectToParent(parent);
+            // Move middle key up to parent
+            parentNode.Keys.Insert(index, fullChildNode.Keys[t - 1]);
+            fullChildNode.Keys.RemoveAt(t - 1);
         }
 
-        /// <summary>
-        ///     Adds a child to the parent node at the appropriate position.
-        /// </summary>
-        /// <param name="parent">The parent node.</param>
-        /// <param name="child">The child node to add.</param>
-        private void AddChild(ISelfBalanceTreeNode<T> parent, ISelfBalanceTreeNode<T> child)
+        private void InsertNonFull(SelfBalanceTreeNode<T> node, T key)
         {
-            parent.ChildNodes = parent.ChildNodes.Concat(new ITreeNode[] { child }).ToList();
+            int i = node.Keys.Count - 1;
+            if (node.IsLeaf)
+            {
+                // Insert key into node
+                node.Keys.Add(default); // Temporary space for new key
+                while (i >= 0 && CompareKeys(key, node.Keys[i]) < 0)
+                {
+                    node.Keys[i + 1] = node.Keys[i];
+                    i--;
+                }
+
+                node.Keys[i + 1] = key;
+            }
+            else
+            {
+                // Move to correct child node
+                while (i >= 0 && CompareKeys(key, node.Keys[i]) < 0) i--;
+                i++;
+                SelfBalanceTreeNode<T> child = (SelfBalanceTreeNode<T>)node.ChildNodes[i];
+                if (child.Keys.Count == 2 * Degree - 1)
+                {
+                    SplitChild(node, i, child);
+                    if (CompareKeys(key, node.Keys[i]) > 0) i++;
+                }
+
+                InsertNonFull((SelfBalanceTreeNode<T>)node.ChildNodes[i], key);
+            }
         }
 
-        /// <summary>
-        ///     Removes a key from the B-Tree.
-        /// </summary>
-        /// <param name="key">The key to remove.</param>
-        public void Remove(T key)
+        private int CompareKeys(T x, T y)
         {
-            ISelfBalanceTreeNode<T> node = Search(RootNode as SelfBalanceTreeNode<T>, key);
+            if (OverrideComparer != null) return OverrideComparer.Compare(x, y);
+            return x.CompareTo(y);
+        }
+
+        public bool RemoveSelfBalanceTreeNode(ISelfBalanceTreeNode<T> node, out ISelfBalanceTreeNode<T>[] removedNodes)
+        {
+            removedNodes = null;
             if (node == null)
-                throw new KeyNotFoundException("The key does not exist in the B-Tree.");
+                return false;
+            T key = node.Key;
 
-            // Implement deletion logic here (omitted for brevity)
-            // Proper deletion in B-Trees is complex and involves several cases.
-            // For the purpose of this implementation, we'll focus on insertion.
+            if (!ContainsKey(key))
+                return false;
+
+            SelfBalanceTreeNode<T> root = (SelfBalanceTreeNode<T>)RootNode;
+            List<SelfBalanceTreeNode<T>> removedNodesList = new List<SelfBalanceTreeNode<T>>();
+
+            DeleteKey(root, key, removedNodesList);
+
+            // After deletion, if root has 0 keys and has a child, make the child the new root
+            if (root.Keys.Count == 0)
+            {
+                if (!root.IsLeaf)
+                {
+                    RootNode = root.ChildNodes[0] as SelfBalanceTreeNode<T>;
+                    RootNode.ParentNode = null;
+                }
+                else
+                {
+                    RootNode = null;
+                }
+
+                Remove(root);
+                removedNodesList.Add(root);
+            }
+
+            removedNodes = removedNodesList.Cast<ISelfBalanceTreeNode<T>>().ToArray();
+            return true;
         }
 
-        /// <summary>
-        ///     Searches for a key in the B-Tree starting from the given node.
-        /// </summary>
-        /// <param name="node">The node to start searching from.</param>
-        /// <param name="key">The key to search for.</param>
-        /// <returns>The node containing the key, or null if not found.</returns>
-        private ISelfBalanceTreeNode<T> Search(ISelfBalanceTreeNode<T> node, T key)
+        // Helper methods for deletion
+
+        private bool ContainsKey(T key)
+        {
+            return SearchKey((SelfBalanceTreeNode<T>)RootNode, key) != null;
+        }
+
+        private SelfBalanceTreeNode<T> SearchKey(SelfBalanceTreeNode<T> node, T key)
         {
             int i = 0;
-            while (i < node.Keys.Count && OverrideComparer.Compare(key, node.Keys[i]) > 0)
-                i++;
+            while (i < node.Keys.Count && CompareKeys(key, node.Keys[i]) > 0) i++;
 
-            if (i < node.Keys.Count && OverrideComparer.Compare(key, node.Keys[i]) == 0)
+            if (i < node.Keys.Count && CompareKeys(key, node.Keys[i]) == 0)
                 return node;
 
             if (node.IsLeaf)
                 return null;
-
-            return Search(node.ChildNodes[i] as SelfBalanceTreeNode<T>, key);
+            return SearchKey(node.ChildNodes[i] as SelfBalanceTreeNode<T>, key);
         }
 
-        /// <summary>
-        ///     Overrides the base Tree's Add method to prevent misuse.
-        /// </summary>
-        /// <param name="newNode">The node to add.</param>
-        public new void Add(INode newNode)
+        private void DeleteKey(SelfBalanceTreeNode<T> node, T key, List<SelfBalanceTreeNode<T>> removedNodesList)
         {
-            throw new NotSupportedException("Use AddSelfBalanceTreeNode or Add methods specific to SelfBalanceTree.");
+            int idx = node.Keys.FindIndex(k => CompareKeys(k, key) >= 0);
+
+            if (idx < node.Keys.Count && CompareKeys(node.Keys[idx], key) == 0)
+            {
+                if (node.IsLeaf)
+                    // Case 1: Key is in leaf node
+                    node.Keys.RemoveAt(idx);
+                else
+                    // Case 2: Key is in internal node
+                    DeleteInternalKey(node, key, idx, removedNodesList);
+            }
+            else
+            {
+                if (node.IsLeaf)
+                    // Key not found in tree
+                    return;
+
+                bool flag = idx == node.Keys.Count;
+
+                SelfBalanceTreeNode<T> child = node.ChildNodes[idx] as SelfBalanceTreeNode<T>;
+                if (child.Keys.Count < Degree) Fill(node, idx, removedNodesList);
+
+                if (flag && idx > node.Keys.Count)
+                    DeleteKey(node.ChildNodes[idx - 1] as SelfBalanceTreeNode<T>, key, removedNodesList);
+                else
+                    DeleteKey(node.ChildNodes[idx] as SelfBalanceTreeNode<T>, key, removedNodesList);
+            }
         }
 
-        /// <summary>
-        ///     Overrides the base Tree's Remove method to prevent misuse.
-        /// </summary>
-        /// <param name="node">The node to remove.</param>
-        public new bool Remove(INode node)
+        private void DeleteInternalKey(SelfBalanceTreeNode<T> node, T key, int idx,
+            List<SelfBalanceTreeNode<T>> removedNodesList)
         {
-            throw new NotSupportedException(
-                "Use RemoveSelfBalanceTreeNode or Remove methods specific to SelfBalanceTree.");
+            T k = node.Keys[idx];
+
+            SelfBalanceTreeNode<T> predChild = node.ChildNodes[idx] as SelfBalanceTreeNode<T>;
+            if (predChild.Keys.Count >= Degree)
+            {
+                T predKey = GetPredecessor(predChild);
+                node.Keys[idx] = predKey;
+                DeleteKey(predChild, predKey, removedNodesList);
+            }
+            else
+            {
+                SelfBalanceTreeNode<T> succChild = node.ChildNodes[idx + 1] as SelfBalanceTreeNode<T>;
+                if (succChild.Keys.Count >= Degree)
+                {
+                    T succKey = GetSuccessor(succChild);
+                    node.Keys[idx] = succKey;
+                    DeleteKey(succChild, succKey, removedNodesList);
+                }
+                else
+                {
+                    Merge(node, idx, removedNodesList);
+                    DeleteKey(predChild, key, removedNodesList);
+                }
+            }
         }
 
-        // Implement other required methods from ISelfBalanceTree<T> interface
-
-        public bool RemoveSelfBalanceTreeNode(ISelfBalanceTreeNode<T> node, out ISelfBalanceTreeNode<T>[] removedNodes)
+        private T GetPredecessor(SelfBalanceTreeNode<T> node)
         {
-            removedNodes = Array.Empty<ISelfBalanceTreeNode<T>>();
-            throw new NotImplementedException("Deletion in B-Trees is not implemented in this example.");
+            while (!node.IsLeaf) node = node.ChildNodes[node.ChildNodes.Count - 1] as SelfBalanceTreeNode<T>;
+            return node.Keys[node.Keys.Count - 1];
+        }
+
+        private T GetSuccessor(SelfBalanceTreeNode<T> node)
+        {
+            while (!node.IsLeaf) node = node.ChildNodes[0] as SelfBalanceTreeNode<T>;
+            return node.Keys[0];
+        }
+
+        private void Fill(SelfBalanceTreeNode<T> node, int idx, List<SelfBalanceTreeNode<T>> removedNodesList)
+        {
+            if (idx != 0 && (node.ChildNodes[idx - 1] as SelfBalanceTreeNode<T>).Keys.Count >= Degree)
+            {
+                BorrowFromPrev(node, idx);
+            }
+            else if (idx != node.Keys.Count &&
+                     (node.ChildNodes[idx + 1] as SelfBalanceTreeNode<T>).Keys.Count >= Degree)
+            {
+                BorrowFromNext(node, idx);
+            }
+            else
+            {
+                if (idx != node.Keys.Count)
+                    Merge(node, idx, removedNodesList);
+                else
+                    Merge(node, idx - 1, removedNodesList);
+            }
+        }
+
+        private void BorrowFromPrev(SelfBalanceTreeNode<T> node, int idx)
+        {
+            SelfBalanceTreeNode<T> child = node.ChildNodes[idx] as SelfBalanceTreeNode<T>;
+            SelfBalanceTreeNode<T> sibling = node.ChildNodes[idx - 1] as SelfBalanceTreeNode<T>;
+
+            child.Keys.Insert(0, node.Keys[idx - 1]);
+
+            if (!sibling.IsLeaf)
+            {
+                SelfBalanceTreeNode<T> lastChild =
+                    sibling.ChildNodes[sibling.ChildNodes.Count - 1] as SelfBalanceTreeNode<T>;
+                sibling.ChildNodes.RemoveAt(sibling.ChildNodes.Count - 1);
+                child.ChildNodes.Insert(0, lastChild);
+                lastChild.ParentNode = child;
+            }
+
+            node.Keys[idx - 1] = sibling.Keys[sibling.Keys.Count - 1];
+            sibling.Keys.RemoveAt(sibling.Keys.Count - 1);
+        }
+
+        private void BorrowFromNext(SelfBalanceTreeNode<T> node, int idx)
+        {
+            SelfBalanceTreeNode<T> child = node.ChildNodes[idx] as SelfBalanceTreeNode<T>;
+            SelfBalanceTreeNode<T> sibling = node.ChildNodes[idx + 1] as SelfBalanceTreeNode<T>;
+
+            child.Keys.Add(node.Keys[idx]);
+
+            if (!sibling.IsLeaf)
+            {
+                SelfBalanceTreeNode<T> firstChild = sibling.ChildNodes[0] as SelfBalanceTreeNode<T>;
+                sibling.ChildNodes.RemoveAt(0);
+                child.ChildNodes.Add(firstChild);
+                firstChild.ParentNode = child;
+            }
+
+            node.Keys[idx] = sibling.Keys[0];
+            sibling.Keys.RemoveAt(0);
+        }
+
+        private void Merge(SelfBalanceTreeNode<T> node, int idx, List<SelfBalanceTreeNode<T>> removedNodesList)
+        {
+            SelfBalanceTreeNode<T> child = node.ChildNodes[idx] as SelfBalanceTreeNode<T>;
+            SelfBalanceTreeNode<T> sibling = node.ChildNodes[idx + 1] as SelfBalanceTreeNode<T>;
+
+            child.Keys.Add(node.Keys[idx]);
+            child.Keys.AddRange(sibling.Keys);
+
+            if (!child.IsLeaf)
+                foreach (ITreeNode c in sibling.ChildNodes)
+                {
+                    child.ChildNodes.Add(c);
+                    (c as SelfBalanceTreeNode<T>).ParentNode = child;
+                }
+
+            node.Keys.RemoveAt(idx);
+            node.ChildNodes.RemoveAt(idx + 1);
+
+            Remove(sibling);
+            removedNodesList.Add(sibling);
+        }
+        
+        public void VisualizeTree(bool showDepth = false)
+        {
+            if(showDepth)
+                VisualizeNode((SelfBalanceTreeNode<T>)RootNode, "", true, 0);
+            else
+                VisualizeNode((SelfBalanceTreeNode<T>)RootNode, "", true);
+        }
+
+        private void VisualizeNode(SelfBalanceTreeNode<T> node, string indent, bool last)
+        {
+            if (node == null)
+                return;
+
+            // Print the current node's keys with appropriate indentation
+            Debug.Log(indent + (last ? "└─ " : "├─ ") + $"[Keys: {string.Join(", ", node.Keys)}]");
+
+            // Update the indentation for child nodes
+            indent += last ? "   " : "│  ";
+
+            // Recursively print all child nodes
+            for (int i = 0; i < node.ChildNodes.Count; i++)
+            {
+                SelfBalanceTreeNode<T> childNode = node.ChildNodes[i] as SelfBalanceTreeNode<T>;
+                VisualizeNode(childNode, indent, i == node.ChildNodes.Count - 1);
+            }
+        }
+        
+        private void VisualizeNode(SelfBalanceTreeNode<T> node, string indent, bool last, int depth = 0)
+        {
+            if (node == null)
+                return;
+
+            Debug.Log($"{indent}{(last ? "└──" : "├──")} [Depth: {depth}] [Keys: {string.Join(", ", node.Keys)}]");
+            indent += last ? "    " : "│   ";
+
+            for (int i = 0; i < node.ChildNodes.Count; i++)
+            {
+                var childNode = node.ChildNodes[i] as SelfBalanceTreeNode<T>;
+                VisualizeNode(childNode, indent, i == node.ChildNodes.Count - 1, depth + 1);
+            }
         }
     }
 }

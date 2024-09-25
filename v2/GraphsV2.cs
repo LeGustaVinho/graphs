@@ -6,13 +6,7 @@ namespace LegendaryTools.GraphV2
     public interface ISelfBalanceTreeNode<T> : ITreeNode
         where T : IComparable<T>
     {
-        public T Data { get; }
-        public int Degree { get; } // Minimum degree (defines the range for number of keys)
-        public List<T> Keys { get; set; }
-        public bool IsFull { get; }
-        bool IsLeaf { get; }
-
-        void InsertKey(T key);
+        public T Key { get; }
     }
     
     public interface ISelfBalanceTree<T> : ITree
@@ -52,7 +46,7 @@ namespace LegendaryTools.GraphV2
     
     public interface ITreeNode : INode
     {
-        public ITreeNode ParentNode { get; }
+        public ITreeNode ParentNode { get; set; }
         public List<ITreeNode> ChildNodes { get; set; }
         INodeConnection ConnectToParent(ITreeNode parent, float weight); //Connects this node to a parent node in a tree structure. Ensures that the connection is directed from parent to child.
         void DisconnectFromParent(); //Disconnects this node from its parent.
