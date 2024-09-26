@@ -10,23 +10,17 @@ namespace LegendaryTools.GraphV2
         public T Key => Keys.Count > 0 ? Keys[0] : default(T);
         public List<T> Keys { get; set; }
         public bool IsLeaf => ChildNodes == null || ChildNodes.Count == 0;
-        
-        // Overriding ChildNodes to be of type List<SelfBalanceTreeNode<T>>
-        public new List<SelfBalanceTreeNode<T>> ChildNodes { get; set; }
-
-        // Overriding ParentNode to be of type SelfBalanceTreeNode<T>
-        public new SelfBalanceTreeNode<T> ParentNode { get; set; }
 
         public SelfBalanceTreeNode()
         {
             Keys = new List<T>();
-            ChildNodes = new List<SelfBalanceTreeNode<T>>();
+            ChildNodes = new List<ITreeNode>();
         }
         
         public SelfBalanceTreeNode(T key)
         {
             Keys = new List<T>();
-            ChildNodes = new List<SelfBalanceTreeNode<T>>();
+            ChildNodes = new List<ITreeNode>();
             Keys.Add(key);
         }
     }

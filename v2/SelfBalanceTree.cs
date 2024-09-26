@@ -24,25 +24,24 @@ namespace LegendaryTools.GraphV2
 
             if (RootNode == null)
             {
-                RootNode = newNode;
-                Add(newNode);
+                AddTreeNode(newNode, null);
             }
             else
             {
-                SelfBalanceTreeNode<T> root = (SelfBalanceTreeNode<T>)RootNode;
-                if (root.Keys.Count == 2 * Degree - 1)
+                SelfBalanceTreeNode<T> oldRoot = (SelfBalanceTreeNode<T>)RootNode;
+                if (oldRoot.Keys.Count == 2 * Degree - 1)
                 {
                     SelfBalanceTreeNode<T> newRoot = new SelfBalanceTreeNode<T>();
                     RootNode = newRoot;
                     Add(newRoot);
-                    newRoot.ChildNodes.Add(root);
-                    root.ParentNode = newRoot;
-                    SplitChild(newRoot, 0, root);
+                    newRoot.ChildNodes.Add(oldRoot);
+                    oldRoot.ParentNode = newRoot;
+                    SplitChild(newRoot, 0, oldRoot);
                     InsertNonFull(newRoot, key);
                 }
                 else
                 {
-                    InsertNonFull(root, key);
+                    InsertNonFull(oldRoot, key);
                 }
             }
         }
@@ -99,6 +98,8 @@ namespace LegendaryTools.GraphV2
                 fullChildNode.ChildNodes.RemoveRange(t, t);
             }
 
+            Add(newChild);
+
             // Insert newChild into parentNode's child list
             parentNode.ChildNodes.Insert(index + 1, newChild);
 
@@ -127,14 +128,14 @@ namespace LegendaryTools.GraphV2
                 // Move to correct child node
                 while (i >= 0 && CompareKeys(key, node.Keys[i]) < 0) i--;
                 i++;
-                SelfBalanceTreeNode<T> child = node.ChildNodes[i];
+                SelfBalanceTreeNode<T> child = node.ChildNodes[i] as SelfBalanceTreeNode<T>;
                 if (child.Keys.Count == 2 * Degree - 1)
                 {
                     SplitChild(node, i, child);
                     if (CompareKeys(key, node.Keys[i]) > 0) i++;
                 }
 
-                InsertNonFull(node.ChildNodes[i], key);
+                InsertNonFull(node.ChildNodes[i] as SelfBalanceTreeNode<T>, key);
             }
         }
 
@@ -197,7 +198,7 @@ namespace LegendaryTools.GraphV2
 
             if (node.IsLeaf)
                 return null;
-            return SearchKey(node.ChildNodes[i], key);
+            return SearchKey(node.ChildNodes[i] as SelfBalanceTreeNode<T>, key);
         }
 
         private void DeleteKey(SelfBalanceTreeNode<T> node, T key, List<SelfBalanceTreeNode<T>> removedNodesList)
@@ -226,13 +227,13 @@ namespace LegendaryTools.GraphV2
 
                 bool flag = idx == node.Keys.Count;
 
-                SelfBalanceTreeNode<T> child = node.ChildNodes[idx];
+                SelfBalanceTreeNode<T> child = node.ChildNodes[idx] as SelfBalanceTreeNode<T>;
                 if (child.Keys.Count < Degree) Fill(node, idx, removedNodesList);
 
                 if (flag && idx > node.Keys.Count)
-                    DeleteKey(node.ChildNodes[idx - 1], key, removedNodesList);
+                    DeleteKey(node.ChildNodes[idx - 1] as SelfBalanceTreeNode<T>, key, removedNodesList);
                 else
-                    DeleteKey(node.ChildNodes[idx], key, removedNodesList);
+                    DeleteKey(node.ChildNodes[idx] as SelfBalanceTreeNode<T>, key, removedNodesList);
             }
         }
 
@@ -241,7 +242,7 @@ namespace LegendaryTools.GraphV2
         {
             T k = node.Keys[idx];
 
-            SelfBalanceTreeNode<T> predChild = node.ChildNodes[idx];
+            SelfBalanceTreeNode<T> predChild = node.ChildNodes[idx] as SelfBalanceTreeNode<T>;
             if (predChild.Keys.Count >= Degree)
             {
                 T predKey = GetPredecessor(predChild);
@@ -250,7 +251,7 @@ namespace LegendaryTools.GraphV2
             }
             else
             {
-                SelfBalanceTreeNode<T> succChild = node.ChildNodes[idx + 1];
+                SelfBalanceTreeNode<T> succChild = node.ChildNodes[idx + 1] as SelfBalanceTreeNode<T>;
                 if (succChild.Keys.Count >= Degree)
                 {
                     T succKey = GetSuccessor(succChild);
@@ -267,24 +268,24 @@ namespace LegendaryTools.GraphV2
 
         private T GetPredecessor(SelfBalanceTreeNode<T> node)
         {
-            while (!node.IsLeaf) node = node.ChildNodes[node.ChildNodes.Count - 1];
+            while (!node.IsLeaf) node = node.ChildNodes[node.ChildNodes.Count - 1] as SelfBalanceTreeNode<T>;
             return node.Keys[node.Keys.Count - 1];
         }
 
         private T GetSuccessor(SelfBalanceTreeNode<T> node)
         {
-            while (!node.IsLeaf) node = node.ChildNodes[0];
+            while (!node.IsLeaf) node = node.ChildNodes[0] as SelfBalanceTreeNode<T>;
             return node.Keys[0];
         }
 
         private void Fill(SelfBalanceTreeNode<T> node, int idx, List<SelfBalanceTreeNode<T>> removedNodesList)
         {
-            if (idx != 0 && node.ChildNodes[idx - 1].Keys.Count >= Degree)
+            if (idx != 0 && ((SelfBalanceTreeNode<T>)node.ChildNodes[idx - 1]).Keys.Count >= Degree)
             {
                 BorrowFromPrev(node, idx);
             }
             else if (idx != node.Keys.Count &&
-                     node.ChildNodes[idx + 1].Keys.Count >= Degree)
+                     ((SelfBalanceTreeNode<T>)node.ChildNodes[idx + 1]).Keys.Count >= Degree)
             {
                 BorrowFromNext(node, idx);
             }
@@ -299,15 +300,15 @@ namespace LegendaryTools.GraphV2
 
         private void BorrowFromPrev(SelfBalanceTreeNode<T> node, int idx)
         {
-            SelfBalanceTreeNode<T> child = node.ChildNodes[idx];
-            SelfBalanceTreeNode<T> sibling = node.ChildNodes[idx - 1];
+            SelfBalanceTreeNode<T> child = node.ChildNodes[idx] as SelfBalanceTreeNode<T>;
+            SelfBalanceTreeNode<T> sibling = node.ChildNodes[idx - 1] as SelfBalanceTreeNode<T>;
 
             child.Keys.Insert(0, node.Keys[idx - 1]);
 
             if (!sibling.IsLeaf)
             {
                 SelfBalanceTreeNode<T> lastChild =
-                    sibling.ChildNodes[sibling.ChildNodes.Count - 1];
+                    sibling.ChildNodes[sibling.ChildNodes.Count - 1] as SelfBalanceTreeNode<T>;
                 sibling.ChildNodes.RemoveAt(sibling.ChildNodes.Count - 1);
                 child.ChildNodes.Insert(0, lastChild);
                 lastChild.ParentNode = child;
@@ -319,14 +320,14 @@ namespace LegendaryTools.GraphV2
 
         private void BorrowFromNext(SelfBalanceTreeNode<T> node, int idx)
         {
-            SelfBalanceTreeNode<T> child = node.ChildNodes[idx];
-            SelfBalanceTreeNode<T> sibling = node.ChildNodes[idx + 1];
+            SelfBalanceTreeNode<T> child = node.ChildNodes[idx] as SelfBalanceTreeNode<T>;
+            SelfBalanceTreeNode<T> sibling = node.ChildNodes[idx + 1] as SelfBalanceTreeNode<T>;
 
             child.Keys.Add(node.Keys[idx]);
 
             if (!sibling.IsLeaf)
             {
-                SelfBalanceTreeNode<T> firstChild = sibling.ChildNodes[0];
+                SelfBalanceTreeNode<T> firstChild = sibling.ChildNodes[0] as SelfBalanceTreeNode<T>;
                 sibling.ChildNodes.RemoveAt(0);
                 child.ChildNodes.Add(firstChild);
                 firstChild.ParentNode = child;
@@ -338,8 +339,8 @@ namespace LegendaryTools.GraphV2
 
         private void Merge(SelfBalanceTreeNode<T> node, int idx, List<SelfBalanceTreeNode<T>> removedNodesList)
         {
-            SelfBalanceTreeNode<T> child = node.ChildNodes[idx];
-            SelfBalanceTreeNode<T> sibling = node.ChildNodes[idx + 1];
+            SelfBalanceTreeNode<T> child = node.ChildNodes[idx] as SelfBalanceTreeNode<T>;
+            SelfBalanceTreeNode<T> sibling = node.ChildNodes[idx + 1] as SelfBalanceTreeNode<T>;
 
             child.Keys.Add(node.Keys[idx]);
             child.Keys.AddRange(sibling.Keys);
@@ -385,7 +386,7 @@ namespace LegendaryTools.GraphV2
             // Recursively print all child nodes
             for (int i = 0; i < node.ChildNodes.Count; i++)
             {
-                SelfBalanceTreeNode<T> childNode = node.ChildNodes[i];
+                SelfBalanceTreeNode<T> childNode = node.ChildNodes[i] as SelfBalanceTreeNode<T>;
                 VisualizeNode(childNode, indent, i == node.ChildNodes.Count - 1, sb);
             }
         }
@@ -400,7 +401,7 @@ namespace LegendaryTools.GraphV2
 
             for (int i = 0; i < node.ChildNodes.Count; i++)
             {
-                SelfBalanceTreeNode<T> childNode = node.ChildNodes[i];
+                SelfBalanceTreeNode<T> childNode = node.ChildNodes[i] as SelfBalanceTreeNode<T>;
                 VisualizeNode(childNode, indent, i == node.ChildNodes.Count - 1, sb, depth + 1);
             }
         }
