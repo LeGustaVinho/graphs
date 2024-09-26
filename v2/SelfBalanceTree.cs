@@ -202,7 +202,12 @@ namespace LegendaryTools.GraphV2
 
         private void DeleteKey(SelfBalanceTreeNode<T> node, T key, List<SelfBalanceTreeNode<T>> removedNodesList)
         {
-            int idx = node.Keys.FindIndex(k => CompareKeys(k, key) >= 0);
+            //int idx = node.Keys.FindIndex(k => CompareKeys(k, key) >= 0);
+            int idx = 0;
+            while (idx < node.Keys.Count && CompareKeys(key, node.Keys[idx]) > 0)
+            {
+                idx++;
+            }
 
             if (idx < node.Keys.Count && CompareKeys(node.Keys[idx], key) == 0)
             {

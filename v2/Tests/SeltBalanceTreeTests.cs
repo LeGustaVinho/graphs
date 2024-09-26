@@ -523,6 +523,9 @@ namespace LegendaryTools.GraphV2.Tests
         // Helper method to check if tree contains a key
         private bool ContainsKey(SelfBalanceTreeNode<int> node, int key)
         {
+            if (node == null)
+                return false;
+
             if (node.Keys.Contains(key))
                 return true;
 
@@ -623,589 +626,833 @@ namespace LegendaryTools.GraphV2.Tests
             Assert.AreEqual(2, count20, "There should be two instances of key 20.");
             Assert.AreEqual(1, count30, "There should be one instance of key 30.");
         }
-        
+
         // Test 1: Remove a key from a leaf node
-    [Test]
-    public void Test_RemoveKeyFromLeafNode()
-    {
-        // Arrange
-        var bTree = new SelfBalanceTree<int>(2);
-        int[] keys = { 10, 20, 5 };
-        foreach (var key in keys)
+        [Test]
+        public void Test_RemoveKeyFromLeafNode()
         {
-            var node = new SelfBalanceTreeNode<int>();
-            node.Keys.Add(key);
-            bTree.AddSelfBalanceTreeNode(node);
-        }
-
-        // Act
-        var nodeToRemove = new SelfBalanceTreeNode<int>();
-        nodeToRemove.Keys.Add(5);
-        bool success = bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out var removedNodes);
-
-        // Assert
-        Assert.IsTrue(success, "Removal should succeed for key 5.");
-        Assert.IsFalse(ContainsKey((SelfBalanceTreeNode<int>)bTree.RootNode, 5), "Key 5 should be removed from the tree.");
-    }
-
-    // Test 2: Remove a key from an internal node where the predecessor child has enough keys
-    [Test]
-    public void Test_RemoveKeyFromInternalNode_PredecessorHasEnoughKeys()
-    {
-        // Arrange
-        var bTree = new SelfBalanceTree<int>(2);
-        int[] keys = { 20, 10, 30, 5, 15 };
-        foreach (var key in keys)
-        {
-            var node = new SelfBalanceTreeNode<int>();
-            node.Keys.Add(key);
-            bTree.AddSelfBalanceTreeNode(node);
-        }
-
-        // Act
-        var nodeToRemove = new SelfBalanceTreeNode<int>();
-        nodeToRemove.Keys.Add(20);
-        bool success = bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out var removedNodes);
-
-        // Assert
-        Assert.IsTrue(success, "Removal should succeed for key 20.");
-        Assert.IsFalse(ContainsKey((SelfBalanceTreeNode<int>)bTree.RootNode, 20), "Key 20 should be removed from the tree.");
-        AssertTreeInOrder((SelfBalanceTreeNode<int>)bTree.RootNode, "Tree should remain in order after removing key 20.");
-    }
-
-    // Helper method to assert the tree is in order
-    private void AssertTreeInOrder(SelfBalanceTreeNode<int> node, string message)
-    {
-        var keys = new List<int>();
-        InOrderTraversal(node, keys);
-
-        for (int i = 1; i < keys.Count; i++)
-        {
-            Assert.IsTrue(keys[i - 1] <= keys[i], message);
-        }
-    }
-
-    // Test 3: Remove a key from an internal node where the successor child has enough keys
-    [Test]
-    public void Test_RemoveKeyFromInternalNode_SuccessorHasEnoughKeys()
-    {
-        // Arrange
-        var bTree = new SelfBalanceTree<int>(2);
-        int[] keys = { 50, 30, 70, 10, 40, 60, 80 };
-        foreach (var key in keys)
-        {
-            var node = new SelfBalanceTreeNode<int>();
-            node.Keys.Add(key);
-            bTree.AddSelfBalanceTreeNode(node);
-        }
-
-        // Act
-        var nodeToRemove = new SelfBalanceTreeNode<int>();
-        nodeToRemove.Keys.Add(50);
-        bool success = bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out var removedNodes);
-
-        // Assert
-        Assert.IsTrue(success, "Removal should succeed for key 50.");
-        Assert.IsFalse(ContainsKey((SelfBalanceTreeNode<int>)bTree.RootNode, 50), "Key 50 should be removed from the tree.");
-        AssertTreeInOrder((SelfBalanceTreeNode<int>)bTree.RootNode, "Tree should remain in order after removing key 50.");
-    }
-
-    // Test 4: Remove a key causing a merge of children
-    [Test]
-    public void Test_RemoveKey_CausingMerge()
-    {
-        // Arrange
-        var bTree = new SelfBalanceTree<int>(2);
-        int[] keys = { 20, 5, 15, 25, 30 };
-        foreach (var key in keys)
-        {
-            var node = new SelfBalanceTreeNode<int>();
-            node.Keys.Add(key);
-            bTree.AddSelfBalanceTreeNode(node);
-        }
-
-        bTree.VisualizeTree();
-        
-        // Remove 25 to cause a merge
-        var nodeToRemove1 = new SelfBalanceTreeNode<int>();
-        nodeToRemove1.Keys.Add(25);
-        bTree.RemoveSelfBalanceTreeNode(nodeToRemove1, out var removedNodes1);
-
-        bTree.VisualizeTree();
-        
-        // Act
-        var nodeToRemove2 = new SelfBalanceTreeNode<int>();
-        nodeToRemove2.Keys.Add(20);
-        bool success = bTree.RemoveSelfBalanceTreeNode(nodeToRemove2, out var removedNodes2);
-
-        bTree.VisualizeTree();
-        
-        // Assert
-        Assert.IsTrue(success, "Removal should succeed for key 20.");
-        Assert.IsFalse(ContainsKey((SelfBalanceTreeNode<int>)bTree.RootNode, 20), "Key 20 should be removed from the tree.");
-        AssertTreeInOrder((SelfBalanceTreeNode<int>)bTree.RootNode, "Tree should remain in order after merging.");
-    }
-
-    // Test 5: Attempt to remove a key that does not exist
-    [Test]
-    public void Test_RemoveNonExistentKey()
-    {
-        // Arrange
-        var bTree = new SelfBalanceTree<int>(2);
-        int[] keys = { 10, 20, 30 };
-        foreach (var key in keys)
-        {
-            var node = new SelfBalanceTreeNode<int>();
-            node.Keys.Add(key);
-            bTree.AddSelfBalanceTreeNode(node);
-        }
-
-        // Act
-        var nodeToRemove = new SelfBalanceTreeNode<int>();
-        nodeToRemove.Keys.Add(40);
-        bool success = bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out var removedNodes);
-
-        // Assert
-        Assert.IsFalse(success, "Removal should fail for non-existent key 40.");
-    }
-
-    // Test 6: Remove a key from the root node
-    [Test]
-    public void Test_RemoveKeyFromRoot()
-    {
-        // Arrange
-        var bTree = new SelfBalanceTree<int>(2);
-        int[] keys = { 10, 20, 5 };
-        foreach (var key in keys)
-        {
-            var node = new SelfBalanceTreeNode<int>();
-            node.Keys.Add(key);
-            bTree.AddSelfBalanceTreeNode(node);
-        }
-
-        // Act
-        var nodeToRemove = new SelfBalanceTreeNode<int>();
-        nodeToRemove.Keys.Add(10);
-        bool success = bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out var removedNodes);
-
-        // Assert
-        Assert.IsTrue(success, "Removal should succeed for key 10.");
-        Assert.IsFalse(ContainsKey((SelfBalanceTreeNode<int>)bTree.RootNode, 10), "Key 10 should be removed from the tree.");
-        AssertTreeInOrder((SelfBalanceTreeNode<int>)bTree.RootNode, "Tree should remain in order after removing key from root.");
-    }
-
-    // Test 7: Remove multiple keys in sequence
-    [Test]
-    public void Test_RemoveMultipleKeys()
-    {
-        // Arrange
-        var bTree = new SelfBalanceTree<int>(2);
-        int[] keys = { 5, 15, 25, 35, 45 };
-        foreach (var key in keys)
-        {
-            var node = new SelfBalanceTreeNode<int>();
-            node.Keys.Add(key);
-            bTree.AddSelfBalanceTreeNode(node);
-        }
-
-        // Act & Assert
-        foreach (var key in keys)
-        {
-            var nodeToRemove = new SelfBalanceTreeNode<int>();
-            nodeToRemove.Keys.Add(key);
-            bool success = bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out var removedNodes);
-            Assert.IsTrue(success, $"Removal should succeed for key {key}.");
-            Assert.IsFalse(ContainsKey((SelfBalanceTreeNode<int>)bTree.RootNode, key), $"Key {key} should be removed from the tree.");
-        }
-
-        Assert.IsNull(bTree.RootNode, "Tree should be empty after removing all keys.");
-    }
-
-    // Test 8: Remove keys until the tree becomes empty
-    [Test]
-    public void Test_RemoveUntilTreeIsEmpty()
-    {
-        // Arrange
-        var bTree = new SelfBalanceTree<int>(2);
-        int[] keys = { 10, 20, 30, 40, 50 };
-        foreach (var key in keys)
-        {
-            var node = new SelfBalanceTreeNode<int>();
-            node.Keys.Add(key);
-            bTree.AddSelfBalanceTreeNode(node);
-        }
-
-        // Act & Assert
-        foreach (var key in keys)
-        {
-            var nodeToRemove = new SelfBalanceTreeNode<int>();
-            nodeToRemove.Keys.Add(key);
-            bool success = bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out var removedNodes);
-            Assert.IsTrue(success, $"Removal should succeed for key {key}.");
-        }
-
-        Assert.IsNull(bTree.RootNode, "Tree should be empty after all keys are removed.");
-    }
-
-    // Test 9: Remove a key causing underflow and requiring borrow from previous sibling
-    [Test]
-    public void Test_RemoveKey_UnderflowBorrowFromPrevSibling()
-    {
-        // Arrange
-        var bTree = new SelfBalanceTree<int>(2);
-        int[] keys = { 10, 20, 5, 15, 25 };
-        foreach (var key in keys)
-        {
-            var node = new SelfBalanceTreeNode<int>();
-            node.Keys.Add(key);
-            bTree.AddSelfBalanceTreeNode(node);
-        }
-
-        // Remove 25 to set up the underflow
-        var nodeToRemove1 = new SelfBalanceTreeNode<int>();
-        nodeToRemove1.Keys.Add(25);
-        bTree.RemoveSelfBalanceTreeNode(nodeToRemove1, out var removedNodes1);
-
-        // Act
-        var nodeToRemove2 = new SelfBalanceTreeNode<int>();
-        nodeToRemove2.Keys.Add(15);
-        bool success = bTree.RemoveSelfBalanceTreeNode(nodeToRemove2, out var removedNodes2);
-
-        // Assert
-        Assert.IsTrue(success, "Removal should succeed for key 15.");
-        AssertTreeInOrder((SelfBalanceTreeNode<int>)bTree.RootNode, "Tree should remain in order after borrowing from previous sibling.");
-    }
-
-    // Test 10: Remove a key causing underflow and requiring borrow from next sibling
-    [Test]
-    public void Test_RemoveKey_UnderflowBorrowFromNextSibling()
-    {
-        // Arrange
-        var bTree = new SelfBalanceTree<int>(2);
-        int[] keys = { 20, 10, 30, 5, 15, 25, 35 };
-        foreach (var key in keys)
-        {
-            var node = new SelfBalanceTreeNode<int>();
-            node.Keys.Add(key);
-            bTree.AddSelfBalanceTreeNode(node);
-        }
-
-        // Remove 5 and 15 to set up the underflow
-        var nodeToRemove1 = new SelfBalanceTreeNode<int>();
-        nodeToRemove1.Keys.Add(5);
-        bTree.RemoveSelfBalanceTreeNode(nodeToRemove1, out var removedNodes1);
-
-        var nodeToRemove2 = new SelfBalanceTreeNode<int>();
-        nodeToRemove2.Keys.Add(15);
-        bTree.RemoveSelfBalanceTreeNode(nodeToRemove2, out var removedNodes2);
-
-        // Act
-        var nodeToRemove3 = new SelfBalanceTreeNode<int>();
-        nodeToRemove3.Keys.Add(10);
-        bool success = bTree.RemoveSelfBalanceTreeNode(nodeToRemove3, out var removedNodes3);
-
-        // Assert
-        Assert.IsTrue(success, "Removal should succeed for key 10.");
-        AssertTreeInOrder((SelfBalanceTreeNode<int>)bTree.RootNode, "Tree should remain in order after borrowing from next sibling.");
-    }
-
-    // Test 11: Remove a key causing underflow and requiring merge with previous sibling
-    [Test]
-    public void Test_RemoveKey_UnderflowMergeWithPrevSibling()
-    {
-        // Arrange
-        var bTree = new SelfBalanceTree<int>(2);
-        int[] keys = { 50, 20, 70, 10, 30, 60, 80 };
-        foreach (var key in keys)
-        {
-            var node = new SelfBalanceTreeNode<int>();
-            node.Keys.Add(key);
-            bTree.AddSelfBalanceTreeNode(node);
-        }
-
-        // Remove 10 and 30 to cause underflow
-        var nodeToRemove1 = new SelfBalanceTreeNode<int>();
-        nodeToRemove1.Keys.Add(10);
-        bTree.RemoveSelfBalanceTreeNode(nodeToRemove1, out var removedNodes1);
-
-        var nodeToRemove2 = new SelfBalanceTreeNode<int>();
-        nodeToRemove2.Keys.Add(30);
-        bTree.RemoveSelfBalanceTreeNode(nodeToRemove2, out var removedNodes2);
-
-        // Act
-        var nodeToRemove3 = new SelfBalanceTreeNode<int>();
-        nodeToRemove3.Keys.Add(20);
-        bool success = bTree.RemoveSelfBalanceTreeNode(nodeToRemove3, out var removedNodes3);
-
-        // Assert
-        Assert.IsTrue(success, "Removal should succeed for key 20.");
-        AssertTreeInOrder((SelfBalanceTreeNode<int>)bTree.RootNode, "Tree should remain in order after merging with previous sibling.");
-    }
-
-    // Test 12: Remove a key causing underflow and requiring merge with next sibling
-    [Test]
-    public void Test_RemoveKey_UnderflowMergeWithNextSibling()
-    {
-        // Arrange
-        var bTree = new SelfBalanceTree<int>(2);
-        int[] keys = { 50, 20, 70, 10, 30, 60, 80 };
-        foreach (var key in keys)
-        {
-            var node = new SelfBalanceTreeNode<int>();
-            node.Keys.Add(key);
-            bTree.AddSelfBalanceTreeNode(node);
-        }
-
-        // Remove 60 and 80 to cause underflow
-        var nodeToRemove1 = new SelfBalanceTreeNode<int>();
-        nodeToRemove1.Keys.Add(60);
-        bTree.RemoveSelfBalanceTreeNode(nodeToRemove1, out var removedNodes1);
-
-        var nodeToRemove2 = new SelfBalanceTreeNode<int>();
-        nodeToRemove2.Keys.Add(80);
-        bTree.RemoveSelfBalanceTreeNode(nodeToRemove2, out var removedNodes2);
-
-        // Act
-        var nodeToRemove3 = new SelfBalanceTreeNode<int>();
-        nodeToRemove3.Keys.Add(70);
-        bool success = bTree.RemoveSelfBalanceTreeNode(nodeToRemove3, out var removedNodes3);
-
-        // Assert
-        Assert.IsTrue(success, "Removal should succeed for key 70.");
-        AssertTreeInOrder((SelfBalanceTreeNode<int>)bTree.RootNode, "Tree should remain in order after merging with next sibling.");
-    }
-
-    // Test 13: Remove duplicate keys
-    [Test]
-    public void Test_RemoveDuplicateKeys()
-    {
-        // Arrange
-        var bTree = new SelfBalanceTree<int>(2);
-        int[] keys = { 10, 10, 20, 20, 30 };
-        foreach (var key in keys)
-        {
-            var node = new SelfBalanceTreeNode<int>();
-            node.Keys.Add(key);
-            bTree.AddSelfBalanceTreeNode(node);
-        }
-
-        // Act & Assert
-        var nodeToRemove = new SelfBalanceTreeNode<int>();
-        nodeToRemove.Keys.Add(10);
-        bool success = bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out var removedNodes);
-
-        Assert.IsTrue(success, "Removal should succeed for key 10.");
-        int count10 = CountOccurrences((SelfBalanceTreeNode<int>)bTree.RootNode, 10);
-        Assert.AreEqual(1, count10, "There should be one instance of key 10 remaining.");
-
-        nodeToRemove = new SelfBalanceTreeNode<int>();
-        nodeToRemove.Keys.Add(10);
-        success = bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out removedNodes);
-
-        Assert.IsTrue(success, "Removal should succeed for key 10.");
-        count10 = CountOccurrences((SelfBalanceTreeNode<int>)bTree.RootNode, 10);
-        Assert.AreEqual(0, count10, "There should be no instances of key 10 remaining.");
-    }
-
-    // Test 14: Remove from a tree with degree greater than 2
-    [Test]
-    public void Test_RemoveFromLargeDegreeTree()
-    {
-        // Arrange
-        var bTree = new SelfBalanceTree<int>(4); // Degree t = 4
-        int[] keys = { 10, 20, 30, 40, 50, 60, 70 };
-        foreach (var key in keys)
-        {
-            var node = new SelfBalanceTreeNode<int>();
-            node.Keys.Add(key);
-            bTree.AddSelfBalanceTreeNode(node);
-        }
-
-        // Act
-        var nodeToRemove = new SelfBalanceTreeNode<int>();
-        nodeToRemove.Keys.Add(40);
-        bool success = bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out var removedNodes);
-
-        // Assert
-        Assert.IsTrue(success, "Removal should succeed for key 40 in large degree tree.");
-        Assert.IsFalse(ContainsKey((SelfBalanceTreeNode<int>)bTree.RootNode, 40), "Key 40 should be removed from the tree.");
-    }
-
-    // Test 15: Remove the minimum key in the tree
-    [Test]
-    public void Test_RemoveMinimumKey()
-    {
-        // Arrange
-        var bTree = new SelfBalanceTree<int>(2);
-        int[] keys = { 50, 20, 70, 10, 30 };
-        foreach (var key in keys)
-        {
-            var node = new SelfBalanceTreeNode<int>();
-            node.Keys.Add(key);
-            bTree.AddSelfBalanceTreeNode(node);
-        }
-
-        // Act
-        var minKey = 10;
-        var nodeToRemove = new SelfBalanceTreeNode<int>();
-        nodeToRemove.Keys.Add(minKey);
-        bool success = bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out var removedNodes);
-
-        // Assert
-        Assert.IsTrue(success, "Removal should succeed for minimum key 10.");
-        Assert.IsFalse(ContainsKey((SelfBalanceTreeNode<int>)bTree.RootNode, minKey), "Minimum key should be removed from the tree.");
-    }
-
-    // Test 16: Remove the maximum key in the tree
-    [Test]
-    public void Test_RemoveMaximumKey()
-    {
-        // Arrange
-        var bTree = new SelfBalanceTree<int>(2);
-        int[] keys = { 50, 20, 70, 60, 80 };
-        foreach (var key in keys)
-        {
-            var node = new SelfBalanceTreeNode<int>();
-            node.Keys.Add(key);
-            bTree.AddSelfBalanceTreeNode(node);
-        }
-
-        // Act
-        var maxKey = 80;
-        var nodeToRemove = new SelfBalanceTreeNode<int>();
-        nodeToRemove.Keys.Add(maxKey);
-        bool success = bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out var removedNodes);
-
-        // Assert
-        Assert.IsTrue(success, "Removal should succeed for maximum key 80.");
-        Assert.IsFalse(ContainsKey((SelfBalanceTreeNode<int>)bTree.RootNode, maxKey), "Maximum key should be removed from the tree.");
-    }
-
-    // Test 17: Remove keys in random order
-    [Test]
-    public void Test_RemoveKeysInRandomOrder()
-    {
-        // Arrange
-        var bTree = new SelfBalanceTree<int>(3);
-        int[] keys = { 25, 15, 35, 10, 20, 30, 40 };
-        foreach (var key in keys)
-        {
-            var node = new SelfBalanceTreeNode<int>();
-            node.Keys.Add(key);
-            bTree.AddSelfBalanceTreeNode(node);
-        }
-
-        int[] keysToRemove = { 30, 15, 40, 25 };
-        // Act & Assert
-        foreach (var key in keysToRemove)
-        {
-            var nodeToRemove = new SelfBalanceTreeNode<int>();
-            nodeToRemove.Keys.Add(key);
-            bool success = bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out var removedNodes);
-            Assert.IsTrue(success, $"Removal should succeed for key {key}.");
-            AssertTreeInOrder((SelfBalanceTreeNode<int>)bTree.RootNode, $"Tree should remain in order after removing key {key}.");
-        }
-    }
-
-    // Test 18: Remove keys from a tree with negative keys
-    [Test]
-    public void Test_RemoveNegativeKeys()
-    {
-        // Arrange
-        var bTree = new SelfBalanceTree<int>(2);
-        int[] keys = { -10, -20, -30, -40 };
-        foreach (var key in keys)
-        {
-            var node = new SelfBalanceTreeNode<int>();
-            node.Keys.Add(key);
-            bTree.AddSelfBalanceTreeNode(node);
-        }
-
-        // Act & Assert
-        foreach (var key in keys)
-        {
-            var nodeToRemove = new SelfBalanceTreeNode<int>();
-            nodeToRemove.Keys.Add(key);
-            bool success = bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out var removedNodes);
-            Assert.IsTrue(success, $"Removal should succeed for negative key {key}.");
-            Assert.IsFalse(ContainsKey((SelfBalanceTreeNode<int>)bTree.RootNode, key), $"Negative key {key} should be removed from the tree.");
-        }
-    }
-
-    // Test 19: Remove keys with large integer values
-    [Test]
-    public void Test_RemoveLargeIntegerKeys()
-    {
-        // Arrange
-        var bTree = new SelfBalanceTree<int>(2);
-        int[] keys = { 1000000, 2000000, 3000000 };
-        foreach (var key in keys)
-        {
-            var node = new SelfBalanceTreeNode<int>();
-            node.Keys.Add(key);
-            bTree.AddSelfBalanceTreeNode(node);
-        }
-
-        // Act & Assert
-        foreach (var key in keys)
-        {
-            var nodeToRemove = new SelfBalanceTreeNode<int>();
-            nodeToRemove.Keys.Add(key);
-            bool success = bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out var removedNodes);
-            Assert.IsTrue(success, $"Removal should succeed for large key {key}.");
-            Assert.IsFalse(ContainsKey((SelfBalanceTreeNode<int>)bTree.RootNode, key), $"Large key {key} should be removed from the tree.");
-        }
-    }
-
-    // Test 20: Remove keys and verify tree remains valid B-Tree after each removal
-    [Test]
-    public void Test_RemoveKeys_VerifyBTreeProperties()
-    {
-        // Arrange
-        var bTree = new SelfBalanceTree<int>(3);
-        int[] keys = { 50, 20, 70, 10, 30, 60, 80 };
-        foreach (var key in keys)
-        {
-            var node = new SelfBalanceTreeNode<int>();
-            node.Keys.Add(key);
-            bTree.AddSelfBalanceTreeNode(node);
-        }
-
-        int[] keysToRemove = { 30, 70, 20, 80 };
-        // Act & Assert
-        foreach (var key in keysToRemove)
-        {
-            var nodeToRemove = new SelfBalanceTreeNode<int>();
-            nodeToRemove.Keys.Add(key);
-            bool success = bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out var removedNodes);
-            Assert.IsTrue(success, $"Removal should succeed for key {key}.");
-            Assert.IsTrue(CheckBTreeProperties((SelfBalanceTreeNode<int>)bTree.RootNode, bTree.Degree), $"Tree should satisfy B-Tree properties after removing key {key}.");
-        }
-    }
-
-    // Helper method to check B-Tree properties
-    private bool CheckBTreeProperties(SelfBalanceTreeNode<int> node, int degree)
-    {
-        if (node == null) return true;
-
-        // Check number of keys
-        if (node != (SelfBalanceTreeNode<int>)node.ParentNode && (node.Keys.Count < degree - 1 || node.Keys.Count > 2 * degree - 1))
-            return false;
-
-        // Check number of children
-        if (!node.IsLeaf)
-        {
-            if (node.ChildNodes.Count != node.Keys.Count + 1)
-                return false;
-
-            foreach (var child in node.ChildNodes)
+            // Arrange
+            SelfBalanceTree<int> bTree = new SelfBalanceTree<int>(2);
+            int[] keys = { 10, 20, 5 };
+            foreach (int key in keys)
             {
-                if (!CheckBTreeProperties(child, degree))
-                    return false;
+                SelfBalanceTreeNode<int> node = new SelfBalanceTreeNode<int>();
+                node.Keys.Add(key);
+                bTree.AddSelfBalanceTreeNode(node);
+            }
+
+            // Act
+            SelfBalanceTreeNode<int> nodeToRemove = new SelfBalanceTreeNode<int>();
+            nodeToRemove.Keys.Add(5);
+            bool success = bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out ISelfBalanceTreeNode<int>[] removedNodes);
+
+            // Assert
+            Assert.IsTrue(success, "Removal should succeed for key 5.");
+            Assert.IsFalse(ContainsKey((SelfBalanceTreeNode<int>)bTree.RootNode, 5),
+                "Key 5 should be removed from the tree.");
+        }
+
+        // Test 2: Remove a key from an internal node where the predecessor child has enough keys
+        [Test]
+        public void Test_RemoveKeyFromInternalNode_PredecessorHasEnoughKeys()
+        {
+            // Arrange
+            SelfBalanceTree<int> bTree = new SelfBalanceTree<int>(2);
+            int[] keys = { 20, 10, 30, 5, 15 };
+            foreach (int key in keys)
+            {
+                SelfBalanceTreeNode<int> node = new SelfBalanceTreeNode<int>();
+                node.Keys.Add(key);
+                bTree.AddSelfBalanceTreeNode(node);
+            }
+
+            // Act
+            SelfBalanceTreeNode<int> nodeToRemove = new SelfBalanceTreeNode<int>();
+            nodeToRemove.Keys.Add(20);
+            bool success = bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out ISelfBalanceTreeNode<int>[] removedNodes);
+
+            // Assert
+            Assert.IsTrue(success, "Removal should succeed for key 20.");
+            Assert.IsFalse(ContainsKey((SelfBalanceTreeNode<int>)bTree.RootNode, 20),
+                "Key 20 should be removed from the tree.");
+            AssertTreeInOrder((SelfBalanceTreeNode<int>)bTree.RootNode,
+                "Tree should remain in order after removing key 20.");
+        }
+
+        // Helper method to assert the tree is in order
+        private void AssertTreeInOrder(SelfBalanceTreeNode<int> node, string message)
+        {
+            List<int> keys = new List<int>();
+            InOrderTraversal(node, keys);
+
+            for (int i = 1; i < keys.Count; i++) Assert.IsTrue(keys[i - 1] <= keys[i], message);
+        }
+
+        // Test 3: Remove a key from an internal node where the successor child has enough keys
+        [Test]
+        public void Test_RemoveKeyFromInternalNode_SuccessorHasEnoughKeys()
+        {
+            // Arrange
+            SelfBalanceTree<int> bTree = new SelfBalanceTree<int>(2);
+            int[] keys = { 50, 30, 70, 10, 40, 60, 80 };
+            foreach (int key in keys)
+            {
+                SelfBalanceTreeNode<int> node = new SelfBalanceTreeNode<int>();
+                node.Keys.Add(key);
+                bTree.AddSelfBalanceTreeNode(node);
+            }
+
+            // Act
+            SelfBalanceTreeNode<int> nodeToRemove = new SelfBalanceTreeNode<int>();
+            nodeToRemove.Keys.Add(50);
+            bool success = bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out ISelfBalanceTreeNode<int>[] removedNodes);
+
+            // Assert
+            Assert.IsTrue(success, "Removal should succeed for key 50.");
+            Assert.IsFalse(ContainsKey((SelfBalanceTreeNode<int>)bTree.RootNode, 50),
+                "Key 50 should be removed from the tree.");
+            AssertTreeInOrder((SelfBalanceTreeNode<int>)bTree.RootNode,
+                "Tree should remain in order after removing key 50.");
+        }
+
+        // Test 4: Remove a key causing a merge of children
+        [Test]
+        public void Test_RemoveKey_CausingMerge()
+        {
+            // Arrange
+            SelfBalanceTree<int> bTree = new SelfBalanceTree<int>(2);
+            int[] keys = { 20, 5, 15, 25, 30 };
+            foreach (int key in keys)
+            {
+                SelfBalanceTreeNode<int> node = new SelfBalanceTreeNode<int>();
+                node.Keys.Add(key);
+                bTree.AddSelfBalanceTreeNode(node);
+            }
+
+            // Remove 25 to cause a merge
+            SelfBalanceTreeNode<int> nodeToRemove1 = new SelfBalanceTreeNode<int>();
+            nodeToRemove1.Keys.Add(25);
+            bTree.RemoveSelfBalanceTreeNode(nodeToRemove1, out ISelfBalanceTreeNode<int>[] removedNodes1);
+
+            // Act
+            SelfBalanceTreeNode<int> nodeToRemove2 = new SelfBalanceTreeNode<int>();
+            nodeToRemove2.Keys.Add(20);
+            bool success =
+                bTree.RemoveSelfBalanceTreeNode(nodeToRemove2, out ISelfBalanceTreeNode<int>[] removedNodes2);
+
+            // Assert
+            Assert.IsTrue(success, "Removal should succeed for key 20.");
+            Assert.IsFalse(ContainsKey((SelfBalanceTreeNode<int>)bTree.RootNode, 20),
+                "Key 20 should be removed from the tree.");
+            AssertTreeInOrder((SelfBalanceTreeNode<int>)bTree.RootNode, "Tree should remain in order after merging.");
+        }
+
+        // Test 5: Attempt to remove a key that does not exist
+        [Test]
+        public void Test_RemoveNonExistentKey()
+        {
+            // Arrange
+            SelfBalanceTree<int> bTree = new SelfBalanceTree<int>(2);
+            int[] keys = { 10, 20, 30 };
+            foreach (int key in keys)
+            {
+                SelfBalanceTreeNode<int> node = new SelfBalanceTreeNode<int>();
+                node.Keys.Add(key);
+                bTree.AddSelfBalanceTreeNode(node);
+            }
+
+            // Act
+            SelfBalanceTreeNode<int> nodeToRemove = new SelfBalanceTreeNode<int>();
+            nodeToRemove.Keys.Add(40);
+            bool success = bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out ISelfBalanceTreeNode<int>[] removedNodes);
+
+            // Assert
+            Assert.IsFalse(success, "Removal should fail for non-existent key 40.");
+        }
+
+        // Test 6: Remove a key from the root node
+        [Test]
+        public void Test_RemoveKeyFromRoot()
+        {
+            // Arrange
+            SelfBalanceTree<int> bTree = new SelfBalanceTree<int>(2);
+            int[] keys = { 10, 20, 5 };
+            foreach (int key in keys)
+            {
+                SelfBalanceTreeNode<int> node = new SelfBalanceTreeNode<int>();
+                node.Keys.Add(key);
+                bTree.AddSelfBalanceTreeNode(node);
+            }
+
+            // Act
+            SelfBalanceTreeNode<int> nodeToRemove = new SelfBalanceTreeNode<int>();
+            nodeToRemove.Keys.Add(10);
+            bool success = bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out ISelfBalanceTreeNode<int>[] removedNodes);
+
+            // Assert
+            Assert.IsTrue(success, "Removal should succeed for key 10.");
+            Assert.IsFalse(ContainsKey((SelfBalanceTreeNode<int>)bTree.RootNode, 10),
+                "Key 10 should be removed from the tree.");
+            AssertTreeInOrder((SelfBalanceTreeNode<int>)bTree.RootNode,
+                "Tree should remain in order after removing key from root.");
+        }
+
+        // Test 7: Remove multiple keys in sequence
+        [Test]
+        public void Test_RemoveMultipleKeys()
+        {
+            // Arrange
+            SelfBalanceTree<int> bTree = new SelfBalanceTree<int>(2);
+            int[] keys = { 5, 15, 25, 35, 45 };
+            foreach (int key in keys)
+            {
+                SelfBalanceTreeNode<int> node = new SelfBalanceTreeNode<int>();
+                node.Keys.Add(key);
+                bTree.AddSelfBalanceTreeNode(node);
+            }
+
+            // Act & Assert
+            foreach (int key in keys)
+            {
+                SelfBalanceTreeNode<int> nodeToRemove = new SelfBalanceTreeNode<int>();
+                nodeToRemove.Keys.Add(key);
+                bool success =
+                    bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out ISelfBalanceTreeNode<int>[] removedNodes);
+                Assert.IsTrue(success, $"Removal should succeed for key {key}.");
+                Assert.IsFalse(ContainsKey((SelfBalanceTreeNode<int>)bTree.RootNode, key),
+                    $"Key {key} should be removed from the tree.");
+            }
+
+            Assert.IsNull(bTree.RootNode, "Tree should be empty after removing all keys.");
+        }
+
+        // Test 8: Remove keys until the tree becomes empty
+        [Test]
+        public void Test_RemoveUntilTreeIsEmpty()
+        {
+            // Arrange
+            SelfBalanceTree<int> bTree = new SelfBalanceTree<int>(2);
+            int[] keys = { 10, 20, 30, 40, 50 };
+            foreach (int key in keys)
+            {
+                SelfBalanceTreeNode<int> node = new SelfBalanceTreeNode<int>();
+                node.Keys.Add(key);
+                bTree.AddSelfBalanceTreeNode(node);
+            }
+
+            // Act & Assert
+            foreach (int key in keys)
+            {
+                SelfBalanceTreeNode<int> nodeToRemove = new SelfBalanceTreeNode<int>();
+                nodeToRemove.Keys.Add(key);
+                bool success =
+                    bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out ISelfBalanceTreeNode<int>[] removedNodes);
+                Assert.IsTrue(success, $"Removal should succeed for key {key}.");
+            }
+
+            Assert.IsNull(bTree.RootNode, "Tree should be empty after all keys are removed.");
+        }
+
+        // Test 9: Remove a key causing underflow and requiring borrow from previous sibling
+        [Test]
+        public void Test_RemoveKey_UnderflowBorrowFromPrevSibling()
+        {
+            // Arrange
+            SelfBalanceTree<int> bTree = new SelfBalanceTree<int>(2);
+            int[] keys = { 10, 20, 5, 15, 25 };
+            foreach (int key in keys)
+            {
+                SelfBalanceTreeNode<int> node = new SelfBalanceTreeNode<int>();
+                node.Keys.Add(key);
+                bTree.AddSelfBalanceTreeNode(node);
+            }
+
+            // Remove 25 to set up the underflow
+            SelfBalanceTreeNode<int> nodeToRemove1 = new SelfBalanceTreeNode<int>();
+            nodeToRemove1.Keys.Add(25);
+            bTree.RemoveSelfBalanceTreeNode(nodeToRemove1, out ISelfBalanceTreeNode<int>[] removedNodes1);
+
+            // Act
+            SelfBalanceTreeNode<int> nodeToRemove2 = new SelfBalanceTreeNode<int>();
+            nodeToRemove2.Keys.Add(15);
+            bool success =
+                bTree.RemoveSelfBalanceTreeNode(nodeToRemove2, out ISelfBalanceTreeNode<int>[] removedNodes2);
+
+            // Assert
+            Assert.IsTrue(success, "Removal should succeed for key 15.");
+            AssertTreeInOrder((SelfBalanceTreeNode<int>)bTree.RootNode,
+                "Tree should remain in order after borrowing from previous sibling.");
+        }
+
+        // Test 10: Remove a key causing underflow and requiring borrow from next sibling
+        [Test]
+        public void Test_RemoveKey_UnderflowBorrowFromNextSibling()
+        {
+            // Arrange
+            SelfBalanceTree<int> bTree = new SelfBalanceTree<int>(2);
+            int[] keys = { 20, 10, 30, 5, 15, 25, 35 };
+            foreach (int key in keys)
+            {
+                SelfBalanceTreeNode<int> node = new SelfBalanceTreeNode<int>();
+                node.Keys.Add(key);
+                bTree.AddSelfBalanceTreeNode(node);
+            }
+
+            // Remove 5 and 15 to set up the underflow
+            SelfBalanceTreeNode<int> nodeToRemove1 = new SelfBalanceTreeNode<int>();
+            nodeToRemove1.Keys.Add(5);
+            bTree.RemoveSelfBalanceTreeNode(nodeToRemove1, out ISelfBalanceTreeNode<int>[] removedNodes1);
+
+            SelfBalanceTreeNode<int> nodeToRemove2 = new SelfBalanceTreeNode<int>();
+            nodeToRemove2.Keys.Add(15);
+            bTree.RemoveSelfBalanceTreeNode(nodeToRemove2, out ISelfBalanceTreeNode<int>[] removedNodes2);
+
+            // Act
+            SelfBalanceTreeNode<int> nodeToRemove3 = new SelfBalanceTreeNode<int>();
+            nodeToRemove3.Keys.Add(10);
+            bool success =
+                bTree.RemoveSelfBalanceTreeNode(nodeToRemove3, out ISelfBalanceTreeNode<int>[] removedNodes3);
+
+            // Assert
+            Assert.IsTrue(success, "Removal should succeed for key 10.");
+            AssertTreeInOrder((SelfBalanceTreeNode<int>)bTree.RootNode,
+                "Tree should remain in order after borrowing from next sibling.");
+        }
+
+        // Test 11: Remove a key causing underflow and requiring merge with previous sibling
+        [Test]
+        public void Test_RemoveKey_UnderflowMergeWithPrevSibling()
+        {
+            // Arrange
+            SelfBalanceTree<int> bTree = new SelfBalanceTree<int>(2);
+            int[] keys = { 50, 20, 70, 10, 30, 60, 80 };
+            foreach (int key in keys)
+            {
+                SelfBalanceTreeNode<int> node = new SelfBalanceTreeNode<int>();
+                node.Keys.Add(key);
+                bTree.AddSelfBalanceTreeNode(node);
+            }
+
+            // Remove 10 and 30 to cause underflow
+            SelfBalanceTreeNode<int> nodeToRemove1 = new SelfBalanceTreeNode<int>();
+            nodeToRemove1.Keys.Add(10);
+            bTree.RemoveSelfBalanceTreeNode(nodeToRemove1, out ISelfBalanceTreeNode<int>[] removedNodes1);
+
+            SelfBalanceTreeNode<int> nodeToRemove2 = new SelfBalanceTreeNode<int>();
+            nodeToRemove2.Keys.Add(30);
+            bTree.RemoveSelfBalanceTreeNode(nodeToRemove2, out ISelfBalanceTreeNode<int>[] removedNodes2);
+
+            // Act
+            SelfBalanceTreeNode<int> nodeToRemove3 = new SelfBalanceTreeNode<int>();
+            nodeToRemove3.Keys.Add(20);
+            bool success =
+                bTree.RemoveSelfBalanceTreeNode(nodeToRemove3, out ISelfBalanceTreeNode<int>[] removedNodes3);
+
+            // Assert
+            Assert.IsTrue(success, "Removal should succeed for key 20.");
+            AssertTreeInOrder((SelfBalanceTreeNode<int>)bTree.RootNode,
+                "Tree should remain in order after merging with previous sibling.");
+        }
+
+        // Test 12: Remove a key causing underflow and requiring merge with next sibling
+        [Test]
+        public void Test_RemoveKey_UnderflowMergeWithNextSibling()
+        {
+            // Arrange
+            SelfBalanceTree<int> bTree = new SelfBalanceTree<int>(2);
+            int[] keys = { 50, 20, 70, 10, 30, 60, 80 };
+            foreach (int key in keys)
+            {
+                SelfBalanceTreeNode<int> node = new SelfBalanceTreeNode<int>();
+                node.Keys.Add(key);
+                bTree.AddSelfBalanceTreeNode(node);
+            }
+
+            // Remove 60 and 80 to cause underflow
+            SelfBalanceTreeNode<int> nodeToRemove1 = new SelfBalanceTreeNode<int>();
+            nodeToRemove1.Keys.Add(60);
+            bTree.RemoveSelfBalanceTreeNode(nodeToRemove1, out ISelfBalanceTreeNode<int>[] removedNodes1);
+
+            SelfBalanceTreeNode<int> nodeToRemove2 = new SelfBalanceTreeNode<int>();
+            nodeToRemove2.Keys.Add(80);
+            bTree.RemoveSelfBalanceTreeNode(nodeToRemove2, out ISelfBalanceTreeNode<int>[] removedNodes2);
+
+            // Act
+            SelfBalanceTreeNode<int> nodeToRemove3 = new SelfBalanceTreeNode<int>();
+            nodeToRemove3.Keys.Add(70);
+            bool success =
+                bTree.RemoveSelfBalanceTreeNode(nodeToRemove3, out ISelfBalanceTreeNode<int>[] removedNodes3);
+
+            // Assert
+            Assert.IsTrue(success, "Removal should succeed for key 70.");
+            AssertTreeInOrder((SelfBalanceTreeNode<int>)bTree.RootNode,
+                "Tree should remain in order after merging with next sibling.");
+        }
+
+        // Test 13: Remove duplicate keys
+        [Test]
+        public void Test_RemoveDuplicateKeys()
+        {
+            // Arrange
+            SelfBalanceTree<int> bTree = new SelfBalanceTree<int>(2);
+            int[] keys = { 10, 10, 20, 20, 30 };
+            foreach (int key in keys)
+            {
+                SelfBalanceTreeNode<int> node = new SelfBalanceTreeNode<int>();
+                node.Keys.Add(key);
+                bTree.AddSelfBalanceTreeNode(node);
+            }
+
+            // Act & Assert
+            SelfBalanceTreeNode<int> nodeToRemove = new SelfBalanceTreeNode<int>();
+            nodeToRemove.Keys.Add(10);
+            bool success = bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out ISelfBalanceTreeNode<int>[] removedNodes);
+
+            Assert.IsTrue(success, "Removal should succeed for key 10.");
+            int count10 = CountOccurrences((SelfBalanceTreeNode<int>)bTree.RootNode, 10);
+            Assert.AreEqual(1, count10, "There should be one instance of key 10 remaining.");
+
+            nodeToRemove = new SelfBalanceTreeNode<int>();
+            nodeToRemove.Keys.Add(10);
+            success = bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out removedNodes);
+
+            Assert.IsTrue(success, "Removal should succeed for key 10.");
+            count10 = CountOccurrences((SelfBalanceTreeNode<int>)bTree.RootNode, 10);
+            Assert.AreEqual(0, count10, "There should be no instances of key 10 remaining.");
+        }
+
+        // Test 14: Remove from a tree with degree greater than 2
+        [Test]
+        public void Test_RemoveFromLargeDegreeTree()
+        {
+            // Arrange
+            SelfBalanceTree<int> bTree = new SelfBalanceTree<int>(4); // Degree t = 4
+            int[] keys = { 10, 20, 30, 40, 50, 60, 70 };
+            foreach (int key in keys)
+            {
+                SelfBalanceTreeNode<int> node = new SelfBalanceTreeNode<int>();
+                node.Keys.Add(key);
+                bTree.AddSelfBalanceTreeNode(node);
+            }
+
+            // Act
+            SelfBalanceTreeNode<int> nodeToRemove = new SelfBalanceTreeNode<int>();
+            nodeToRemove.Keys.Add(40);
+            bool success = bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out ISelfBalanceTreeNode<int>[] removedNodes);
+
+            // Assert
+            Assert.IsTrue(success, "Removal should succeed for key 40 in large degree tree.");
+            Assert.IsFalse(ContainsKey((SelfBalanceTreeNode<int>)bTree.RootNode, 40),
+                "Key 40 should be removed from the tree.");
+        }
+
+        // Test 15: Remove the minimum key in the tree
+        [Test]
+        public void Test_RemoveMinimumKey()
+        {
+            // Arrange
+            SelfBalanceTree<int> bTree = new SelfBalanceTree<int>(2);
+            int[] keys = { 50, 20, 70, 10, 30 };
+            foreach (int key in keys)
+            {
+                SelfBalanceTreeNode<int> node = new SelfBalanceTreeNode<int>();
+                node.Keys.Add(key);
+                bTree.AddSelfBalanceTreeNode(node);
+            }
+
+            // Act
+            int minKey = 10;
+            SelfBalanceTreeNode<int> nodeToRemove = new SelfBalanceTreeNode<int>();
+            nodeToRemove.Keys.Add(minKey);
+            bool success = bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out ISelfBalanceTreeNode<int>[] removedNodes);
+
+            // Assert
+            Assert.IsTrue(success, "Removal should succeed for minimum key 10.");
+            Assert.IsFalse(ContainsKey((SelfBalanceTreeNode<int>)bTree.RootNode, minKey),
+                "Minimum key should be removed from the tree.");
+        }
+
+        // Test 16: Remove the maximum key in the tree
+        [Test]
+        public void Test_RemoveMaximumKey()
+        {
+            // Arrange
+            SelfBalanceTree<int> bTree = new SelfBalanceTree<int>(2);
+            int[] keys = { 50, 20, 70, 60, 80 };
+            foreach (int key in keys)
+            {
+                SelfBalanceTreeNode<int> node = new SelfBalanceTreeNode<int>();
+                node.Keys.Add(key);
+                bTree.AddSelfBalanceTreeNode(node);
+            }
+
+            // Act
+            int maxKey = 80;
+            SelfBalanceTreeNode<int> nodeToRemove = new SelfBalanceTreeNode<int>();
+            nodeToRemove.Keys.Add(maxKey);
+            bool success = bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out ISelfBalanceTreeNode<int>[] removedNodes);
+
+            // Assert
+            Assert.IsTrue(success, "Removal should succeed for maximum key 80.");
+            Assert.IsFalse(ContainsKey((SelfBalanceTreeNode<int>)bTree.RootNode, maxKey),
+                "Maximum key should be removed from the tree.");
+        }
+
+        // Test 17: Remove keys in random order
+        [Test]
+        public void Test_RemoveKeysInRandomOrder()
+        {
+            // Arrange
+            SelfBalanceTree<int> bTree = new SelfBalanceTree<int>(3);
+            int[] keys = { 25, 15, 35, 10, 20, 30, 40 };
+            foreach (int key in keys)
+            {
+                SelfBalanceTreeNode<int> node = new SelfBalanceTreeNode<int>();
+                node.Keys.Add(key);
+                bTree.AddSelfBalanceTreeNode(node);
+            }
+
+            int[] keysToRemove = { 30, 15, 40, 25 };
+            // Act & Assert
+            foreach (int key in keysToRemove)
+            {
+                SelfBalanceTreeNode<int> nodeToRemove = new SelfBalanceTreeNode<int>();
+                nodeToRemove.Keys.Add(key);
+                bool success =
+                    bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out ISelfBalanceTreeNode<int>[] removedNodes);
+                Assert.IsTrue(success, $"Removal should succeed for key {key}.");
+                AssertTreeInOrder((SelfBalanceTreeNode<int>)bTree.RootNode,
+                    $"Tree should remain in order after removing key {key}.");
             }
         }
 
-        return true;
-    }
+        // Test 18: Remove keys from a tree with negative keys
+        [Test]
+        public void Test_RemoveNegativeKeys()
+        {
+            // Arrange
+            SelfBalanceTree<int> bTree = new SelfBalanceTree<int>(2);
+            int[] keys = { -10, -20, -30, -40 };
+            foreach (int key in keys)
+            {
+                SelfBalanceTreeNode<int> node = new SelfBalanceTreeNode<int>();
+                node.Keys.Add(key);
+                bTree.AddSelfBalanceTreeNode(node);
+            }
+
+            // Act & Assert
+            foreach (int key in keys)
+            {
+                SelfBalanceTreeNode<int> nodeToRemove = new SelfBalanceTreeNode<int>();
+                nodeToRemove.Keys.Add(key);
+                bool success =
+                    bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out ISelfBalanceTreeNode<int>[] removedNodes);
+                Assert.IsTrue(success, $"Removal should succeed for negative key {key}.");
+                Assert.IsFalse(ContainsKey((SelfBalanceTreeNode<int>)bTree.RootNode, key),
+                    $"Negative key {key} should be removed from the tree.");
+            }
+        }
+
+        // Test 19: Remove keys with large integer values
+        [Test]
+        public void Test_RemoveLargeIntegerKeys()
+        {
+            // Arrange
+            SelfBalanceTree<int> bTree = new SelfBalanceTree<int>(2);
+            int[] keys = { 1000000, 2000000, 3000000 };
+            foreach (int key in keys)
+            {
+                SelfBalanceTreeNode<int> node = new SelfBalanceTreeNode<int>();
+                node.Keys.Add(key);
+                bTree.AddSelfBalanceTreeNode(node);
+            }
+
+            // Act & Assert
+            foreach (int key in keys)
+            {
+                SelfBalanceTreeNode<int> nodeToRemove = new SelfBalanceTreeNode<int>();
+                nodeToRemove.Keys.Add(key);
+                bool success =
+                    bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out ISelfBalanceTreeNode<int>[] removedNodes);
+                Assert.IsTrue(success, $"Removal should succeed for large key {key}.");
+                Assert.IsFalse(ContainsKey((SelfBalanceTreeNode<int>)bTree.RootNode, key),
+                    $"Large key {key} should be removed from the tree.");
+            }
+        }
+
+        // Test 20: Remove keys and verify tree remains valid B-Tree after each removal
+        [Test]
+        public void Test_RemoveKeys_VerifyBTreeProperties()
+        {
+            // Arrange
+            SelfBalanceTree<int> bTree = new SelfBalanceTree<int>(3);
+            int[] keys = { 50, 20, 70, 10, 30, 60, 80 };
+            foreach (int key in keys)
+            {
+                SelfBalanceTreeNode<int> node = new SelfBalanceTreeNode<int>();
+                node.Keys.Add(key);
+                bTree.AddSelfBalanceTreeNode(node);
+            }
+
+            int[] keysToRemove = { 30, 70, 20, 80 };
+            // Act & Assert
+            foreach (int key in keysToRemove)
+            {
+                SelfBalanceTreeNode<int> nodeToRemove = new SelfBalanceTreeNode<int>();
+                nodeToRemove.Keys.Add(key);
+                bool success =
+                    bTree.RemoveSelfBalanceTreeNode(nodeToRemove, out ISelfBalanceTreeNode<int>[] removedNodes);
+                bTree.VisualizeTree();
+                Assert.IsTrue(success, $"Removal should succeed for key {key}.");
+                Assert.IsTrue(CheckBTreeProperties((SelfBalanceTreeNode<int>)bTree.RootNode, bTree.Degree),
+                    $"Tree should satisfy B-Tree properties after removing key {key}.");
+            }
+        }
+
+        // Helper method to check B-Tree properties
+        private bool CheckBTreeProperties(SelfBalanceTreeNode<int> node, int degree)
+        {
+            if (node == null) return true;
+
+            // Check number of keys
+            if (node.ParentNode == null)
+            {
+                // Root node
+                if (node.Keys.Count < 1 || node.Keys.Count > 2 * degree - 1)
+                    return false;
+            }
+            else
+            {
+                // Non-root nodes
+                if (node.Keys.Count < degree - 1 || node.Keys.Count > 2 * degree - 1)
+                    return false;
+            }
+
+            // Check number of children
+            if (!node.IsLeaf)
+            {
+                if (node.ChildNodes.Count != node.Keys.Count + 1)
+                    return false;
+
+                foreach (SelfBalanceTreeNode<int> child in node.ChildNodes)
+                    if (!CheckBTreeProperties(child, degree))
+                        return false;
+            }
+
+            return true;
+        }
+
+        // Test 1: Test if the tree is a directed acyclic graph
+        [Test]
+        public void Test_IsDirectedAcyclic()
+        {
+            // Arrange
+            SelfBalanceTree<int> bTree = new SelfBalanceTree<int>(2);
+
+            // Act
+            bool isDirectedAcyclic = bTree.IsDirectedAcyclic;
+
+            // Assert
+            Assert.IsTrue(isDirectedAcyclic, "SelfBalanceTree should be a directed acyclic graph upon initialization.");
+        }
+
+        // Test 2: Test RootNode property returns the correct node
+        [Test]
+        public void Test_RootNodeProperty()
+        {
+            // Arrange
+            SelfBalanceTree<int> bTree = new SelfBalanceTree<int>(2);
+            SelfBalanceTreeNode<int> node = new SelfBalanceTreeNode<int>(bTree.Degree);
+            node.Keys.Add(10);
+
+            // Act
+            bTree.AddSelfBalanceTreeNode(node);
+            SelfBalanceTreeNode<int> rootNode = bTree.RootNode as SelfBalanceTreeNode<int>;
+
+            // Assert
+            Assert.IsNotNull(rootNode, "RootNode should not be null after adding a node.");
+            Assert.AreEqual(10, rootNode.Keys[0], "RootNode should contain the key 10.");
+        }
+
+        // Test 3: Test Height property returns expected value
+        [Test]
+        public void Test_HeightProperty()
+        {
+            // Arrange
+            SelfBalanceTree<int> bTree = new SelfBalanceTree<int>(2);
+            int[] keys = { 10, 20, 5, 6, 12 };
+            foreach (int key in keys)
+            {
+                SelfBalanceTreeNode<int> node = new SelfBalanceTreeNode<int>(bTree.Degree);
+                node.Keys.Add(key);
+                bTree.AddSelfBalanceTreeNode(node);
+            }
+
+            // Act
+            int height = bTree.Height;
+
+            // Assert
+            Assert.AreEqual(2, height, "Height should be 2 after adding 5 keys to a B-Tree of degree 2.");
+        }
+
+        // Test 4: Test Width property returns expected value
+        [Test]
+        public void Test_WidthProperty()
+        {
+            // Arrange
+            SelfBalanceTree<int> bTree = new SelfBalanceTree<int>(2);
+            int[] keys = { 1, 2, 3, 4, 5, 6, 7 };
+            foreach (int key in keys)
+            {
+                SelfBalanceTreeNode<int> node = new SelfBalanceTreeNode<int>(bTree.Degree);
+                node.Keys.Add(key);
+                bTree.AddSelfBalanceTreeNode(node);
+            }
+
+            // Act
+            int width = bTree.Width;
+
+            // Assert
+            Assert.AreEqual(4, width, "Width should be 4 after adding 7 keys to a B-Tree of degree 2.");
+        }
+
+        // Test 5: Test AllNodes property returns all nodes in the tree
+        [Test]
+        public void Test_AllNodesProperty()
+        {
+            // Arrange
+            SelfBalanceTree<int> bTree = new SelfBalanceTree<int>(2);
+            int[] keys = { 10, 20, 6, 5, };
+            foreach (int key in keys)
+            {
+                SelfBalanceTreeNode<int> node = new SelfBalanceTreeNode<int>();
+                node.Keys.Add(key);
+                bTree.AddSelfBalanceTreeNode(node);
+            }
+
+            bTree.VisualizeTree();
+            
+            // Act
+            INode[] allNodes = bTree.AllNodes;
+
+            // Assert
+            Assert.AreEqual(3, allNodes.Length, "AllNodes should return 3 nodes after adding 3 keys.");
+        }
+
+        // Test 6: Test Neighbours of a node are correct
+        [Test]
+        public void Test_NeighboursProperty()
+        {
+            // Arrange
+            SelfBalanceTree<int> bTree = new SelfBalanceTree<int>(2);
+            int[] keys = { 50, 20, 70, 10, 30, 60, 80 };
+            Dictionary<int, SelfBalanceTreeNode<int>> nodes = new Dictionary<int, SelfBalanceTreeNode<int>>();
+
+            foreach (int key in keys)
+            {
+                SelfBalanceTreeNode<int> node = new SelfBalanceTreeNode<int>();
+                node.Keys.Add(key);
+                bTree.AddSelfBalanceTreeNode(node);
+                nodes[key] = node;
+            }
+
+            // Act
+            INode[] node20Neighbours = nodes[20].Neighbours;
+            INode[] node70Neighbours = nodes[70].Neighbours;
+
+            // Assert
+            Assert.Contains(nodes[50], node20Neighbours, "Node 20 should have Node 50 as a neighbour.");
+            Assert.Contains(nodes[50], node70Neighbours, "Node 70 should have Node 50 as a neighbour.");
+        }
+
+        // Test 7: Test DepthFirstSearch method
+        [Test]
+        public void Test_DepthFirstSearch()
+        {
+            // Arrange
+            SelfBalanceTree<int> bTree = new SelfBalanceTree<int>(2);
+            int[] keys = { 10, 20, 5, 6, 12, 15, 30 };
+            foreach (int key in keys)
+            {
+                SelfBalanceTreeNode<int> node = new SelfBalanceTreeNode<int>();
+                node.Keys.Add(key);
+                bTree.AddSelfBalanceTreeNode(node);
+            }
+
+            // Act
+            ITreeNode searchResult = bTree.DepthFirstSearch(n => ((SelfBalanceTreeNode<int>)n).Keys.Contains(15));
+
+            // Assert
+            Assert.IsNotNull(searchResult, "DepthFirstSearch should find the node containing key 15.");
+            Assert.AreEqual(15, ((SelfBalanceTreeNode<int>)searchResult).Keys[0],
+                "Found node should contain the key 15.");
+        }
+
+        // Test 8: Test HeightFirstSearch method
+        [Test]
+        public void Test_HeightFirstSearch()
+        {
+            // Arrange
+            SelfBalanceTree<int> bTree = new SelfBalanceTree<int>(2);
+            int[] keys = { 1, 2, 3, 4, 5, 6, 7 };
+            foreach (int key in keys)
+            {
+                SelfBalanceTreeNode<int> node = new SelfBalanceTreeNode<int>();
+                node.Keys.Add(key);
+                bTree.AddSelfBalanceTreeNode(node);
+            }
+
+            // Act
+            ITreeNode searchResult = bTree.HeightFirstSearch(n => ((SelfBalanceTreeNode<int>)n).Keys.Contains(5));
+
+            // Assert
+            Assert.IsNotNull(searchResult, "HeightFirstSearch should find the node containing key 5.");
+            Assert.AreEqual(5, ((SelfBalanceTreeNode<int>)searchResult).Keys[0],
+                "Found node should contain the key 5.");
+        }
+
+        // Test 9: Test DepthFirstTraverse method
+        [Test]
+        public void Test_DepthFirstTraverse()
+        {
+            // Arrange
+            SelfBalanceTree<int> bTree = new SelfBalanceTree<int>(2);
+            int[] keys = { 15, 10, 20, 5, 12, 17, 25 };
+            foreach (int key in keys)
+            {
+                SelfBalanceTreeNode<int> node = new SelfBalanceTreeNode<int>();
+                node.Keys.Add(key);
+                bTree.AddSelfBalanceTreeNode(node);
+            }
+
+            // Act
+            List<ITreeNode> traversal = bTree.DepthFirstTraverse();
+
+            // Assert
+            Assert.IsNotNull(traversal, "DepthFirstTraverse should return a list of nodes.");
+            Assert.AreEqual(keys.Length, traversal.Count, "Traversal should visit all nodes.");
+        }
+
+        // Test 10: Test HeightFirstTraverse method
+        [Test]
+        public void Test_HeightFirstTraverse()
+        {
+            // Arrange
+            SelfBalanceTree<int> bTree = new SelfBalanceTree<int>(2);
+            int[] keys = { 8, 4, 12, 2, 6, 10, 14 };
+            foreach (int key in keys)
+            {
+                SelfBalanceTreeNode<int> node = new SelfBalanceTreeNode<int>();
+                node.Keys.Add(key);
+                bTree.AddSelfBalanceTreeNode(node);
+            }
+
+            // Act
+            List<ITreeNode> traversal = bTree.HeightFirstTraverse();
+
+            // Assert
+            Assert.IsNotNull(traversal, "HeightFirstTraverse should return a list of nodes.");
+            Assert.AreEqual(keys.Length, traversal.Count, "Traversal should visit all nodes.");
+        }
     }
 }
