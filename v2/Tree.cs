@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using UnityEngine;
 
 namespace LegendaryTools.GraphV2
 {
@@ -184,6 +186,53 @@ namespace LegendaryTools.GraphV2
             }
 
             return maxWidth;
+        }
+        
+        public virtual void VisualizeTree(bool showDepth = false)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("B-Tree");
+
+            if (showDepth)
+                VisualizeNode(RootNode, "", true, sb, 0);
+            else
+                VisualizeNode(RootNode, "", true, sb);
+
+            Debug.Log(sb.ToString());
+        }
+
+        private void VisualizeNode(ITreeNode node, string indent, bool last, StringBuilder sb)
+        {
+            if (node == null)
+                return;
+
+            // Print the current node's keys with appropriate indentation
+            sb.AppendLine(indent + (last ? "└─ " : "├─ ") + $"[Id: {node.Id}]");
+
+            // Update the indentation for child nodes
+            indent += last ? "   " : "│  ";
+
+            // Recursively print all child nodes
+            for (int i = 0; i < node.ChildNodes.Count; i++)
+            {
+                ITreeNode childNode = node.ChildNodes[i];
+                VisualizeNode(childNode, indent, i == node.ChildNodes.Count - 1, sb);
+            }
+        }
+
+        private void VisualizeNode(ITreeNode node, string indent, bool last, StringBuilder sb, int depth)
+        {
+            if (node == null)
+                return;
+
+            sb.AppendLine($"{indent}{(last ? "└──" : "├──")} [Depth: {depth}] [Id: {node.Id}]");
+            indent += last ? "    " : "│   ";
+
+            for (int i = 0; i < node.ChildNodes.Count; i++)
+            {
+                ITreeNode childNode = node.ChildNodes[i];
+                VisualizeNode(childNode, indent, i == node.ChildNodes.Count - 1, sb, depth + 1);
+            }
         }
     }
 }

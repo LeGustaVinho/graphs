@@ -13,8 +13,7 @@ namespace LegendaryTools.GraphV2
         where T : IComparable<T>
     {
         public IComparer<T> OverrideComparer { get; set; }
-        
-        void AddSelfBalanceTreeNode(ISelfBalanceTreeNode<T> newNode, ISelfBalanceTreeNode<T> parentNode, float weight = 1); // Insert a new node in the B-tree
+        void AddSelfBalanceTreeNode(ISelfBalanceTreeNode<T> newNode); // Insert a new node in the B-tree
         bool RemoveSelfBalanceTreeNode(ISelfBalanceTreeNode<T> node, out ISelfBalanceTreeNode<T>[] removedNodes); // Remove a node from the B-tree
     }
 

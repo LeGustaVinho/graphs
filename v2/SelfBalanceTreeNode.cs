@@ -5,29 +5,29 @@ namespace LegendaryTools.GraphV2
 {
     public class SelfBalanceTreeNode<T> : TreeNode, ISelfBalanceTreeNode<T> where T : IComparable<T>
     {
-        public T Data { get; }
-        public List<T> Keys { get; set; }
-        public int Degree { get; set; } // Minimum degree (t) of B-Tree
-        public bool IsLeaf => ChildNodes == null || ChildNodes.Count == 0;
-
-        public SelfBalanceTreeNode(int degree)
-        {
-            Degree = degree;
-            Keys = new List<T>();
-            ChildNodes = new List<ITreeNode>();
-        }
-
         // Implementing Key property from ISelfBalanceTreeNode<T>
-        public T Key
+        // For compliance, return the first key
+        public T Key => Keys.Count > 0 ? Keys[0] : default(T);
+        public List<T> Keys { get; set; }
+        public bool IsLeaf => ChildNodes == null || ChildNodes.Count == 0;
+        
+        // Overriding ChildNodes to be of type List<SelfBalanceTreeNode<T>>
+        public new List<SelfBalanceTreeNode<T>> ChildNodes { get; set; }
+
+        // Overriding ParentNode to be of type SelfBalanceTreeNode<T>
+        public new SelfBalanceTreeNode<T> ParentNode { get; set; }
+
+        public SelfBalanceTreeNode()
         {
-            get
-            {
-                // For compliance, return the first key
-                if (Keys.Count > 0)
-                    return Keys[0];
-                else
-                    return default(T);
-            }
+            Keys = new List<T>();
+            ChildNodes = new List<SelfBalanceTreeNode<T>>();
+        }
+        
+        public SelfBalanceTreeNode(T key)
+        {
+            Keys = new List<T>();
+            ChildNodes = new List<SelfBalanceTreeNode<T>>();
+            Keys.Add(key);
         }
     }
 }
