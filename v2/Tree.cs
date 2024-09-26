@@ -30,7 +30,7 @@ namespace LegendaryTools.GraphV2
             }
         }
 
-        public void AddTreeNode(ITreeNode newNode, ITreeNode parentNode, float weight = 1)
+        public void AddTreeNode(ITreeNode newNode, ITreeNode parentNode)
         {
             if (newNode == null) throw new ArgumentNullException(nameof(newNode));
             if (parentNode == null && RootNode != null)
@@ -47,7 +47,7 @@ namespace LegendaryTools.GraphV2
             {
                 if (!Contains(parentNode))
                     throw new ArgumentException("Parent node does not exist in the tree.");
-                newNode.ConnectToParent(parentNode, weight);
+                newNode.ConnectToParent(parentNode);
             }
 
             Add(newNode);

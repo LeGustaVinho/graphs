@@ -308,32 +308,6 @@ namespace LegendaryTools.GraphV2.Tests
         }
 
         [Test]
-        public void ConnectNodes_WithDifferentWeights_ShouldSetWeightsCorrectly()
-        {
-            graph.Add(nodeA);
-            graph.Add(nodeB);
-            graph.Add(nodeC);
-
-            var connAB = nodeA.ConnectTo(nodeB, NodeConnectionDirection.Unidirectional, 2.5f);
-            var connAC = nodeA.ConnectTo(nodeC, NodeConnectionDirection.Bidirectional, 5.0f);
-
-            Assert.AreEqual(2.5f, connAB.Weight, "Connection from nodeA to nodeB should have weight 2.5.");
-            Assert.AreEqual(5.0f, connAC.Weight, "Connection from nodeA to nodeC should have weight 5.0.");
-        }
-
-        [Test]
-        public void UpdateConnectionWeight_ShouldReflectNewWeight()
-        {
-            graph.Add(nodeA);
-            graph.Add(nodeB);
-
-            var connection = nodeA.ConnectTo(nodeB, NodeConnectionDirection.Unidirectional, 1.0f);
-            connection.Weight = 3.5f;
-
-            Assert.AreEqual(3.5f, connection.Weight, "After updating, the connection's weight should reflect the new value.");
-        }
-
-        [Test]
         public void ConnectNodes_WithBidirectional_ShouldCreateOneOutboundConnections()
         {
             graph.Add(nodeA);
@@ -1137,30 +1111,6 @@ namespace LegendaryTools.GraphV2.Tests
 
              // nodeB is shared
              Assert.Throws<InvalidOperationException>(() => childGraph2.Add(nodeB), "Nodes cannot be shared");
-        }
-
-        [Test]
-        public void ConnectNodes_ShouldHandleHighWeightConnections()
-        {
-            graph.Add(nodeA);
-            graph.Add(nodeB);
-
-            float highWeight = 1000.0f;
-            var connection = nodeA.ConnectTo(nodeB, NodeConnectionDirection.Unidirectional, highWeight);
-
-            Assert.AreEqual(highWeight, connection.Weight, "Connection should correctly store high weight values.");
-        }
-
-        [Test]
-        public void ConnectNodes_ShouldHandleLowWeightConnections()
-        {
-            graph.Add(nodeA);
-            graph.Add(nodeB);
-
-            float lowWeight = 0.0001f;
-            var connection = nodeA.ConnectTo(nodeB, NodeConnectionDirection.Unidirectional, lowWeight);
-
-            Assert.AreEqual(lowWeight, connection.Weight, "Connection should correctly store low weight values.");
         }
 
         [Test]

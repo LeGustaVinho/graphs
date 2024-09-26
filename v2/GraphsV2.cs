@@ -35,7 +35,7 @@ namespace LegendaryTools.GraphV2
         ITreeNode RootNode { get; }
         public int Height { get; }
         public int Width { get; }
-        void AddTreeNode(ITreeNode newNode, ITreeNode parentNode, float weight = 1); //Adds a node to the tree, validating the graph remains directed acyclic tree
+        void AddTreeNode(ITreeNode newNode, ITreeNode parentNode); //Adds a node to the tree, validating the graph remains directed acyclic tree
         bool RemoveTreeNode(ITreeNode node, out ITreeNode[] removedNodes);
         public ITreeNode DepthFirstSearch(Predicate<INode> predicate);
         public ITreeNode HeightFirstSearch(Predicate<INode> predicate);
@@ -47,7 +47,7 @@ namespace LegendaryTools.GraphV2
     {
         public ITreeNode ParentNode { get; set; }
         public List<ITreeNode> ChildNodes { get; set; }
-        INodeConnection ConnectToParent(ITreeNode parent, float weight); //Connects this node to a parent node in a tree structure. Ensures that the connection is directed from parent to child.
+        INodeConnection ConnectToParent(ITreeNode parent); //Connects this node to a parent node in a tree structure. Ensures that the connection is directed from parent to child.
         void DisconnectFromParent(); //Disconnects this node from its parent.
     }
     
@@ -81,7 +81,7 @@ namespace LegendaryTools.GraphV2
         INodeConnection[] OutboundConnections { get; }
         INodeConnection[] InboundConnections { get; }
         int Count { get; }
-        INodeConnection ConnectTo(INode to, NodeConnectionDirection newDirection, float weight = 1);
+        INodeConnection ConnectTo(INode to, NodeConnectionDirection newDirection);
         bool RemoveConnection(INodeConnection nodeConnection);
         internal void SetOwner(IGraph owner);
     }
@@ -91,7 +91,6 @@ namespace LegendaryTools.GraphV2
         public string Id { get; set; } //Guid
         public INode FromNode { get; set; }
         public INode ToNode { get; set; }
-        float Weight { get; set; }
         NodeConnectionDirection Direction { get; set; }
         void Disconnect();
     }

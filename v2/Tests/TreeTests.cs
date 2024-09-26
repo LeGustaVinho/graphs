@@ -566,7 +566,7 @@ namespace LegendaryTools.GraphV2.Tests
             ITreeNode node = CreateTreeNode("node");
 
             // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => node.ConnectToParent(null, 1.0f), "Connecting to a null parent should throw an ArgumentNullException.");
+            Assert.Throws<ArgumentNullException>(() => node.ConnectToParent(null), "Connecting to a null parent should throw an ArgumentNullException.");
         }
 
         [Test]
@@ -781,7 +781,7 @@ namespace LegendaryTools.GraphV2.Tests
             tree.AddTreeNode(child, parent);
 
             // Act & Assert
-            var ex = Assert.Throws<InvalidOperationException>(() => child.ConnectToParent(parent, 1.0f), "Attempting to create a bidirectional connection should throw an exception.");
+            var ex = Assert.Throws<InvalidOperationException>(() => child.ConnectToParent(parent), "Attempting to create a bidirectional connection should throw an exception.");
             Assert.AreEqual("Connecting to this parent would create a cycle.", ex.Message, "Exception message should indicate that a cycle is created.");
         }
 

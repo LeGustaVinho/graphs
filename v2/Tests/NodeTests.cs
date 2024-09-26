@@ -180,21 +180,6 @@ namespace LegendaryTools.GraphV2.Tests
         }
 
         [Test]
-        public void Weight_ShouldBeSetCorrectly_OnConnectionCreation()
-        {
-            // Arrange
-            Node nodeA = new Node();
-            Node nodeB = new Node();
-            float expectedWeight = 2.5f;
-
-            // Act
-            INodeConnection connection = nodeA.ConnectTo(nodeB, NodeConnectionDirection.Unidirectional, expectedWeight);
-
-            // Assert
-            Assert.AreEqual(expectedWeight, connection.Weight, "Connection weight should be set correctly.");
-        }
-
-        [Test]
         public void RemoveConnection_ExistingConnection_ShouldReturnTrue_AndRemoveConnection()
         {
             // Arrange
@@ -349,24 +334,6 @@ namespace LegendaryTools.GraphV2.Tests
         }
 
         [Test]
-        public void UpdatingConnectionWeight_ShouldReflectInConnection()
-        {
-            // Arrange
-            Node nodeA = new Node();
-            Node nodeB = new Node();
-            float initialWeight = 1.0f;
-            float updatedWeight = 3.5f;
-
-            INodeConnection connection = nodeA.ConnectTo(nodeB, NodeConnectionDirection.Unidirectional, initialWeight);
-
-            // Act
-            connection.Weight = updatedWeight;
-
-            // Assert
-            Assert.AreEqual(updatedWeight, connection.Weight, "Connection weight should be updated correctly.");
-        }
-
-        [Test]
         public void RemovingBidirectionalConnection_ShouldNotAffectOtherConnections()
         {
             // Arrange
@@ -385,30 +352,6 @@ namespace LegendaryTools.GraphV2.Tests
             Assert.IsFalse(nodeB.Connections.Contains(connAB), "Connection AB should be removed from NodeB.");
             Assert.IsTrue(nodeA.Connections.Contains(connAC), "Connection AC should still exist in NodeA.");
             Assert.IsTrue(nodeC.Connections.Contains(connAC), "Connection AC should still exist em NodeC.");
-        }
-
-        [Test]
-        public void ConnectTo_WithDifferentWeights_ShouldStoreCorrectWeights()
-        {
-            // Arrange
-            Node nodeA = new Node();
-            Node nodeB = new Node();
-
-            float weight1 = 1.0f;
-            float weight2 = 2.5f;
-
-            INodeConnection conn1 = nodeA.ConnectTo(nodeB, NodeConnectionDirection.Unidirectional, weight1);
-            // Attempt to connect again should return existing connection
-            INodeConnection conn2 = nodeA.ConnectTo(nodeB, NodeConnectionDirection.Unidirectional, weight2);
-
-            // Act
-            // Since connection already exists, weight should not be updated unless explicitly handled
-            // No update logic is present, so weight should remain as weight1
-            float finalWeight = conn1.Weight;
-
-            // Assert
-            Assert.AreEqual(weight1, finalWeight, "Existing connection weight should not change.");
-            Assert.AreEqual(conn1, conn2, "ConnectTo should return the existing connection.");
         }
         
         [Test]
@@ -449,38 +392,6 @@ namespace LegendaryTools.GraphV2.Tests
             Assert.AreEqual(1, nodeB.Connections.Count, "NodeB should have 1 connections.");
             Assert.Contains(conn2, nodeA.Connections);
             Assert.Contains(conn2, nodeB.Connections);
-        }
-
-        [Test]
-        public void ConnectTo_ConnectionWithZeroWeight_ShouldAllowCreation()
-        {
-            // Arrange
-            Node nodeA = new Node();
-            Node nodeB = new Node();
-            float zeroWeight = 0.0f;
-
-            // Act
-            INodeConnection connection = nodeA.ConnectTo(nodeB, NodeConnectionDirection.Unidirectional, zeroWeight);
-
-            // Assert
-            Assert.IsNotNull(connection, "Connection should be created even with zero weight.");
-            Assert.AreEqual(zeroWeight, connection.Weight, "Connection weight should be zero.");
-        }
-
-        [Test]
-        public void ConnectTo_ConnectionWithNegativeWeight_ShouldAllowCreation()
-        {
-            // Arrange
-            Node nodeA = new Node();
-            Node nodeB = new Node();
-            float negativeWeight = -5.0f;
-
-            // Act
-            INodeConnection connection = nodeA.ConnectTo(nodeB, NodeConnectionDirection.Unidirectional, negativeWeight);
-
-            // Assert
-            Assert.IsNotNull(connection, "Connection should be created even with negative weight.");
-            Assert.AreEqual(negativeWeight, connection.Weight, "Connection weight should be negative.");
         }
 
         [Test]
@@ -592,54 +503,6 @@ namespace LegendaryTools.GraphV2.Tests
             // Act & Assert
             // NodeConnectionDirection is an enum, so it cannot be null. Testing invalid enum value.
             Assert.Throws<ArgumentException>(() => nodeA.ConnectTo(nodeB, (NodeConnectionDirection)999));
-        }
-
-        [Test]
-        public void ConnectTo_InvalidWeight_ShouldAllowCreation()
-        {
-            // Arrange
-            Node nodeA = new Node();
-            Node nodeB = new Node();
-            float invalidWeight = float.NaN;
-
-            // Act
-            INodeConnection connection = nodeA.ConnectTo(nodeB, NodeConnectionDirection.Unidirectional, invalidWeight);
-
-            // Assert
-            Assert.IsNotNull(connection, "Connection should be created even with invalid weight.");
-            Assert.IsTrue(float.IsNaN(connection.Weight), "Connection weight should be NaN.");
-        }
-
-        [Test]
-        public void ConnectTo_MaxFloatWeight_ShouldAllowCreation()
-        {
-            // Arrange
-            Node nodeA = new Node();
-            Node nodeB = new Node();
-            float maxWeight = float.MaxValue;
-
-            // Act
-            INodeConnection connection = nodeA.ConnectTo(nodeB, NodeConnectionDirection.Unidirectional, maxWeight);
-
-            // Assert
-            Assert.IsNotNull(connection, "Connection should be created with maximum float weight.");
-            Assert.AreEqual(maxWeight, connection.Weight, "Connection weight should be float.MaxValue.");
-        }
-
-        [Test]
-        public void ConnectTo_MinFloatWeight_ShouldAllowCreation()
-        {
-            // Arrange
-            Node nodeA = new Node();
-            Node nodeB = new Node();
-            float minWeight = float.MinValue;
-
-            // Act
-            INodeConnection connection = nodeA.ConnectTo(nodeB, NodeConnectionDirection.Unidirectional, minWeight);
-
-            // Assert
-            Assert.IsNotNull(connection, "Connection should be created with minimum float weight.");
-            Assert.AreEqual(minWeight, connection.Weight, "Connection weight should be float.MinValue.");
         }
 
         [Test]

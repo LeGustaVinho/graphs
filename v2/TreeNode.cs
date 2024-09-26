@@ -14,7 +14,7 @@ namespace LegendaryTools.GraphV2
             ChildNodes = new List<ITreeNode>();
         }
 
-        public INodeConnection ConnectToParent(ITreeNode parent, float weight = 1.0f)
+        public INodeConnection ConnectToParent(ITreeNode parent)
         {
             if (parent == null) throw new ArgumentNullException(nameof(parent));
             if (parent == this) throw new InvalidOperationException("A node cannot be its own parent.");
@@ -25,7 +25,7 @@ namespace LegendaryTools.GraphV2
             DisconnectFromParent();
 
             // Establish connection from parent to this node (Directed)
-            INodeConnection connection = parent.ConnectTo(this, NodeConnectionDirection.Unidirectional, weight);
+            INodeConnection connection = parent.ConnectTo(this, NodeConnectionDirection.Unidirectional);
             if (connection != null)
             {
                 ParentNode = parent;

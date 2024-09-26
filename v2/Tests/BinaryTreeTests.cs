@@ -720,23 +720,6 @@ namespace LegendaryTools.GraphV2.Tests
         }
 
         /// <summary>
-        ///     Test that node connections have the correct weight.
-        /// </summary>
-        [Test]
-        public void NodeConnections_ShouldHaveCorrectWeight()
-        {
-            BinaryTreeNode parent = new BinaryTreeNode { Id = "Parent" };
-            BinaryTreeNode child = new BinaryTreeNode { Id = "Child" };
-
-            _binaryTree.AddTreeNode(parent, null);
-            _binaryTree.AddTreeNode(child, parent, 2.5f);
-
-            INodeConnection connection = parent.Connections.FirstOrDefault(conn => conn.ToNode == child);
-            Assert.IsNotNull(connection, "Connection from parent to child should exist.");
-            Assert.AreEqual(2.5f, connection.Weight, "Connection weight should be set to 2.5.");
-        }
-
-        /// <summary>
         ///     Test that removing a connection from a node works correctly.
         /// </summary>
         [Test]

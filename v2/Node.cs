@@ -101,7 +101,7 @@ namespace LegendaryTools.GraphV2
 
         public int Count => Connections.Count;
 
-        public INodeConnection ConnectTo(INode to, NodeConnectionDirection newDirection, float weight = 1.0f)
+        public INodeConnection ConnectTo(INode to, NodeConnectionDirection newDirection)
         {
             if (to == null) throw new ArgumentNullException(nameof(to));
             if (Equals(to)) throw new InvalidOperationException("Cannot connect node to itself.");
@@ -154,7 +154,7 @@ namespace LegendaryTools.GraphV2
                 }
             }
 
-            NodeConnection connection = new NodeConnection(this, to, newDirection, weight);
+            NodeConnection connection = new NodeConnection(this, to, newDirection);
             Connections.Add(connection);
             to.Connections.Add(connection);
             return connection;

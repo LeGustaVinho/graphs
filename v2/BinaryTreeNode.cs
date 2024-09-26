@@ -22,7 +22,7 @@ namespace LegendaryTools.GraphV2
             if (parent.Left != null)
                 throw new InvalidOperationException("Parent already has a left child.");
 
-            INodeConnection connection = ConnectToParent(parent, weight);
+            INodeConnection connection = ConnectToParent(parent);
             if (connection != null)
             {
                 // Ensure bidirectional reference in the parent
@@ -48,7 +48,7 @@ namespace LegendaryTools.GraphV2
             if (parent.Right != null)
                 throw new InvalidOperationException("Parent already has a right child.");
 
-            INodeConnection connection = ConnectToParent(parent, weight);
+            INodeConnection connection = ConnectToParent(parent);
             if (connection != null)
             {
                 // Ensure bidirectional reference in the parent
