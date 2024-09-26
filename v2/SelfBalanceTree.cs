@@ -34,8 +34,8 @@ namespace LegendaryTools.GraphV2
                     SelfBalanceTreeNode<T> newRoot = new SelfBalanceTreeNode<T>();
                     RootNode = newRoot;
                     Add(newRoot);
-                    newRoot.ChildNodes.Add(oldRoot);
-                    oldRoot.ParentNode = newRoot;
+                    newRoot.AddChild(oldRoot);
+                    oldRoot.SetParent(newRoot);
                     SplitChild(newRoot, 0, oldRoot);
                     InsertNonFull(newRoot, key);
                 }
@@ -45,46 +45,12 @@ namespace LegendaryTools.GraphV2
                 }
             }
         }
-
-        //V1
-        // private void SplitChild(SelfBalanceTreeNode<T> parentNode, int index, SelfBalanceTreeNode<T> fullChildNode)
-        // {
-        //     int t = Degree;
-        //     SelfBalanceTreeNode<T> newChild = new SelfBalanceTreeNode<T>();
-        //     Add(newChild);
-        //     newChild.ParentNode = parentNode;
-        //
-        //     // Move keys
-        //     for (int j = 0; j < t - 1; j++)
-        //     {
-        //         newChild.Keys.Add(fullChildNode.Keys[t]);
-        //         fullChildNode.Keys.RemoveAt(t);
-        //     }
-        //
-        //     // Move child pointers if not leaf
-        //     if (!fullChildNode.IsLeaf)
-        //         for (int j = 0; j < t; j++)
-        //         {
-        //             SelfBalanceTreeNode<T> child = (SelfBalanceTreeNode<T>)fullChildNode.ChildNodes[t];
-        //             fullChildNode.ChildNodes.RemoveAt(t);
-        //             newChild.ChildNodes.Add(child);
-        //             child.ParentNode = newChild;
-        //         }
-        //
-        //     // Insert new child into parent
-        //     parentNode.ChildNodes.Insert(index + 1, newChild);
-        //
-        //     // Move middle key up to parent
-        //     parentNode.Keys.Insert(index, fullChildNode.Keys[t - 1]);
-        //     fullChildNode.Keys.RemoveAt(t - 1);
-        // }
-
-        //V2
+        
         private void SplitChild(SelfBalanceTreeNode<T> parentNode, int index, SelfBalanceTreeNode<T> fullChildNode)
         {
             int t = Degree;
             SelfBalanceTreeNode<T> newChild = new SelfBalanceTreeNode<T>();
-            newChild.ParentNode = parentNode;
+            newChild.SetParent(parentNode);
 
             // Copy the last t - 1 keys of fullChildNode to newChild
             newChild.Keys.AddRange(fullChildNode.Keys.GetRange(t, t - 1));
@@ -93,15 +59,15 @@ namespace LegendaryTools.GraphV2
             // If fullChildNode is not a leaf, move its last t children to newChild
             if (!fullChildNode.IsLeaf)
             {
-                newChild.ChildNodes.AddRange(fullChildNode.ChildNodes.GetRange(t, t));
-                foreach (ITreeNode child in newChild.ChildNodes) child.ParentNode = newChild;
-                fullChildNode.ChildNodes.RemoveRange(t, t);
+                newChild.AddChildRange(fullChildNode.ChildNodes.GetRange(t, t));
+                foreach (ITreeNode child in newChild.ChildNodes) child.SetParent(newChild);
+                fullChildNode.RemoveRange(t, t);
             }
 
             Add(newChild);
 
             // Insert newChild into parentNode's child list
-            parentNode.ChildNodes.Insert(index + 1, newChild);
+            parentNode.InsertChild(index + 1, newChild);
 
             // Move the middle key of fullChildNode up to parentNode
             parentNode.Keys.Insert(index, fullChildNode.Keys[t - 1]);
@@ -166,7 +132,7 @@ namespace LegendaryTools.GraphV2
                 if (!root.IsLeaf)
                 {
                     RootNode = root.ChildNodes[0];
-                    RootNode.ParentNode = null;
+                    RootNode.SetParent(null);
                 }
                 else
                 {
@@ -309,9 +275,9 @@ namespace LegendaryTools.GraphV2
             {
                 SelfBalanceTreeNode<T> lastChild =
                     sibling.ChildNodes[sibling.ChildNodes.Count - 1] as SelfBalanceTreeNode<T>;
-                sibling.ChildNodes.RemoveAt(sibling.ChildNodes.Count - 1);
-                child.ChildNodes.Insert(0, lastChild);
-                lastChild.ParentNode = child;
+                sibling.ChildRemoveAt(sibling.ChildNodes.Count - 1);
+                child.InsertChild(0, lastChild);
+                lastChild.SetParent(child);
             }
 
             node.Keys[idx - 1] = sibling.Keys[sibling.Keys.Count - 1];
@@ -328,9 +294,9 @@ namespace LegendaryTools.GraphV2
             if (!sibling.IsLeaf)
             {
                 SelfBalanceTreeNode<T> firstChild = sibling.ChildNodes[0] as SelfBalanceTreeNode<T>;
-                sibling.ChildNodes.RemoveAt(0);
-                child.ChildNodes.Add(firstChild);
-                firstChild.ParentNode = child;
+                sibling.ChildRemoveAt(0);
+                child.AddChild(firstChild);
+                firstChild.SetParent(child);
             }
 
             node.Keys[idx] = sibling.Keys[0];
@@ -348,12 +314,12 @@ namespace LegendaryTools.GraphV2
             if (!child.IsLeaf)
                 foreach (SelfBalanceTreeNode<T> c in sibling.ChildNodes)
                 {
-                    child.ChildNodes.Add(c);
-                    c.ParentNode = child;
+                    child.AddChild(c);
+                    c.SetParent(child);
                 }
 
             node.Keys.RemoveAt(idx);
-            node.ChildNodes.RemoveAt(idx + 1);
+            node.ChildRemoveAt(idx + 1);
 
             Remove(sibling);
             removedNodesList.Add(sibling);

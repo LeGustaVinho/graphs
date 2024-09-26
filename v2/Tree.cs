@@ -84,7 +84,7 @@ namespace LegendaryTools.GraphV2
             return true;
         }
 
-        private void CollectSubtree(ITreeNode node, List<ITreeNode> collection)
+        protected void CollectSubtree(ITreeNode node, List<ITreeNode> collection)
         {
             collection.Add(node);
             foreach (ITreeNode child in node.ChildNodes) CollectSubtree(child, collection);
@@ -136,6 +136,32 @@ namespace LegendaryTools.GraphV2
             return traversal;
         }
 
+        protected void ReplaceRootNode(ITreeNode newRootNode)
+        {
+            if (newRootNode == null) throw new ArgumentNullException(nameof(newRootNode));
+
+            if (RootNode != null)
+            {
+                // Optionally, disconnect the old root node from the tree
+                // For B-Tree, we typically adjust the root without removing the old root
+            }
+
+            RootNode = newRootNode;
+            if (!Contains(newRootNode))
+            {
+                Add(newRootNode);
+            }
+
+            // Ensure the tree remains acyclic and directed
+            if (IsCyclic || !IsDirected)
+            {
+                // Undo addition
+                Remove(newRootNode);
+                RootNode = null;
+                throw new InvalidOperationException("Setting this node as root creates a cycle or violates tree properties.");
+            }
+        }
+        
         private void DepthFirstTraverse(ITreeNode node, List<ITreeNode> traversal)
         {
             if (node == null) return;

@@ -101,7 +101,7 @@ namespace LegendaryTools.GraphV2
 
         public int Count => Connections.Count;
 
-        public INodeConnection ConnectTo(INode to, NodeConnectionDirection newDirection)
+        public virtual INodeConnection ConnectTo(INode to, NodeConnectionDirection newDirection)
         {
             if (to == null) throw new ArgumentNullException(nameof(to));
             if (Equals(to)) throw new InvalidOperationException("Cannot connect node to itself.");
@@ -160,7 +160,7 @@ namespace LegendaryTools.GraphV2
             return connection;
         }
 
-        public bool RemoveConnection(INodeConnection nodeConnection)
+        public virtual bool RemoveConnection(INodeConnection nodeConnection)
         {
             if (Connections.Remove(nodeConnection))
             {
@@ -169,6 +169,23 @@ namespace LegendaryTools.GraphV2
             }
 
             return false;
+        }
+
+        public INodeConnection FindConnectionBetweenNodes(INode from, INode to)
+        {
+            foreach (INodeConnection conn in Connections)
+            {
+                bool isSameNodes = conn.ToNode == to && conn.FromNode == from; //Same nodes
+                bool isInversedNode = conn.FromNode == to && conn.ToNode == from;
+
+                switch (conn.Direction)
+                {
+                    case NodeConnectionDirection.Unidirectional: if (isSameNodes) return conn; break;
+                    case NodeConnectionDirection.Bidirectional: if (isSameNodes || isInversedNode) return conn; break;
+                }
+            }
+
+            return null;
         }
 
         void INode.SetOwner(IGraph owner)

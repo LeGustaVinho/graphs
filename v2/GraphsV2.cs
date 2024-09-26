@@ -47,6 +47,15 @@ namespace LegendaryTools.GraphV2
     {
         public ITreeNode ParentNode { get; set; }
         public List<ITreeNode> ChildNodes { get; set; }
+
+        INodeConnection SetParent(ITreeNode newParent);
+        INodeConnection AddChild(ITreeNode newNode);
+        List<INodeConnection> AddChildRange(IEnumerable<ITreeNode> collection);
+        INodeConnection InsertChild(int index, ITreeNode newNode);
+        void RemoveRange(int index, int count);
+        bool RemoveChild(ITreeNode nodeToRemove);
+        bool Contains(ITreeNode nodeToRemove);
+        
         INodeConnection ConnectToParent(ITreeNode parent); //Connects this node to a parent node in a tree structure. Ensures that the connection is directed from parent to child.
         void DisconnectFromParent(); //Disconnects this node from its parent.
     }
@@ -83,6 +92,7 @@ namespace LegendaryTools.GraphV2
         int Count { get; }
         INodeConnection ConnectTo(INode to, NodeConnectionDirection newDirection);
         bool RemoveConnection(INodeConnection nodeConnection);
+        INodeConnection FindConnectionBetweenNodes(INode from, INode to);
         internal void SetOwner(IGraph owner);
     }
     
