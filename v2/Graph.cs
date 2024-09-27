@@ -144,7 +144,7 @@ namespace LegendaryTools.GraphV2
                 }
                 return true;
             }
-
+            node.SetOwner(null);
             return false;
         }
 

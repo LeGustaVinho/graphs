@@ -60,7 +60,10 @@ namespace LegendaryTools.GraphV2
             if (!fullChildNode.IsLeaf)
             {
                 newChild.AddChildRange(fullChildNode.ChildNodes.GetRange(t, t));
-                foreach (ITreeNode child in newChild.ChildNodes) child.SetParent(newChild);
+                foreach (ITreeNode child in newChild.ChildNodes)
+                {
+                    (child as SelfBalanceTreeNode<T>).SetParent(newChild);
+                }
                 fullChildNode.RemoveRange(t, t);
             }
 
@@ -132,7 +135,7 @@ namespace LegendaryTools.GraphV2
                 if (!root.IsLeaf)
                 {
                     RootNode = root.ChildNodes[0];
-                    RootNode.SetParent(null);
+                    (RootNode as SelfBalanceTreeNode<T>).SetParent(null);
                 }
                 else
                 {
