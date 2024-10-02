@@ -14,7 +14,7 @@ namespace LegendaryTools.GraphV2
         public INode FromNode { get; set; }
         public INode ToNode { get; set; }
         public NodeConnectionDirection Direction { get; set; }
-
+        
         public NodeConnection(INode fromNode, INode toNode, NodeConnectionDirection direction)
         {
             Id = Guid.NewGuid().ToString();
@@ -30,6 +30,18 @@ namespace LegendaryTools.GraphV2
             {
                 ToNode.RemoveConnection(this);
             }
+        }
+
+        public INode GetOut(INode from)
+        {
+            if (Direction == NodeConnectionDirection.Unidirectional) return ToNode;
+            return from == ToNode ? FromNode : ToNode;
+        }
+
+        public INode GetIn(INode to)
+        {
+            if (Direction == NodeConnectionDirection.Unidirectional) return FromNode;
+            return to == FromNode ? ToNode : FromNode;
         }
     }
 }

@@ -7,5 +7,7 @@
         public INode ToNode { get; set; }
         NodeConnectionDirection Direction { get; set; }
         void Disconnect();
+        INode GetOut(INode from);
+        INode GetIn(INode to);
     }
 }

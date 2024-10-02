@@ -251,11 +251,11 @@ namespace LegendaryTools.GraphV2.Tests
         }
 
         [Test]
-        public void MultipleConnections_DifferentDirections_ShouldBeHandledCorrectly()
+        public void MultipleConnections_DifferentDirections_ShouldBeMergeToSameConnection()
         {
             // Arrange
-            Node nodeA = new Node();
-            Node nodeB = new Node();
+            Node nodeA = new Node(true);
+            Node nodeB = new Node(true);
 
             // Act
             INodeConnection conn1 = nodeA.ConnectTo(nodeB, NodeConnectionDirection.Unidirectional);
@@ -380,8 +380,8 @@ namespace LegendaryTools.GraphV2.Tests
         public void ConnectTo_DifferentDirections_ShouldNotCreateSeparateConnections()
         {
             // Arrange
-            Node nodeA = new Node();
-            Node nodeB = new Node();
+            Node nodeA = new Node(true);
+            Node nodeB = new Node(true);
 
             // Act
             INodeConnection conn1 = nodeA.ConnectTo(nodeB, NodeConnectionDirection.Unidirectional);

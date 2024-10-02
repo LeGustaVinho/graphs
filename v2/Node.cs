@@ -7,12 +7,14 @@ namespace LegendaryTools.GraphV2
     {
         public string Id { get; set; }
         public List<INodeConnection> Connections { get; }
-        public IGraph Owner { get; set; }
+        public IGraph Owner { get; protected set; }
+        public bool ShouldMergeOppositeConnections { get; }
 
-        public Node()
+        public Node(bool shouldMergeOppositeConnections = false)
         {
             Id = Guid.NewGuid().ToString();
             Connections = new List<INodeConnection>();
+            ShouldMergeOppositeConnections = shouldMergeOppositeConnections;
         }
 
         public virtual INode[] Neighbours
@@ -25,7 +27,7 @@ namespace LegendaryTools.GraphV2
                     INode neighbour = null;
                     if (conn.Direction == NodeConnectionDirection.Unidirectional)
                     {
-                        if(conn.ToNode != this)
+                        if (conn.ToNode != this)
                             neighbour = conn.ToNode;
                     }
                     else
@@ -37,6 +39,7 @@ namespace LegendaryTools.GraphV2
                     if (neighbour != null && !neighboursList.Contains(neighbour))
                         neighboursList.Add(neighbour);
                 }
+
                 return neighboursList.ToArray();
             }
         }
@@ -47,7 +50,6 @@ namespace LegendaryTools.GraphV2
             {
                 List<INodeConnection> outbound = new List<INodeConnection>();
                 foreach (INodeConnection conn in Connections)
-                {
                     switch (conn.Direction)
                     {
                         case NodeConnectionDirection.Unidirectional:
@@ -65,7 +67,7 @@ namespace LegendaryTools.GraphV2
                         default:
                             throw new ArgumentOutOfRangeException();
                     }
-                }
+
                 return outbound.ToArray();
             }
         }
@@ -76,7 +78,6 @@ namespace LegendaryTools.GraphV2
             {
                 List<INodeConnection> inbound = new List<INodeConnection>();
                 foreach (INodeConnection conn in Connections)
-                {
                     switch (conn.Direction)
                     {
                         case NodeConnectionDirection.Unidirectional:
@@ -94,7 +95,7 @@ namespace LegendaryTools.GraphV2
                         default:
                             throw new ArgumentOutOfRangeException();
                     }
-                }
+
                 return inbound.ToArray();
             }
         }
@@ -105,8 +106,10 @@ namespace LegendaryTools.GraphV2
         {
             if (to == null) throw new ArgumentNullException(nameof(to));
             if (Equals(to)) throw new InvalidOperationException("Cannot connect node to itself.");
-            if (!Enum.IsDefined(typeof(NodeConnectionDirection), newDirection)) throw new ArgumentException($"{newDirection} is not a valid enum type for {nameof(NodeConnectionDirection)}");
-            
+            if (!Enum.IsDefined(typeof(NodeConnectionDirection), newDirection))
+                throw new ArgumentException(
+                    $"{newDirection} is not a valid enum type for {nameof(NodeConnectionDirection)}");
+
             INode from = this;
             foreach (INodeConnection conn in Connections)
             {
@@ -120,10 +123,14 @@ namespace LegendaryTools.GraphV2
                         if (isSameNodes) return conn; //Is exact the same
                         if (isInversedNode)
                         {
-                            //Update current connection to Bidirectional
-                            conn.Direction = NodeConnectionDirection.Bidirectional;
-                            return conn;
+                            if (ShouldMergeOppositeConnections)
+                            {
+                                //Update current connection to Bidirectional
+                                conn.Direction = NodeConnectionDirection.Bidirectional;
+                                return conn;
+                            }
                         }
+
                         break;
                     }
                     case NodeConnectionDirection.Unidirectional
@@ -137,10 +144,14 @@ namespace LegendaryTools.GraphV2
                     {
                         if (isSameNodes || isInversedNode)
                         {
-                            //Update current connection to Bidirectional
-                            conn.Direction = NodeConnectionDirection.Bidirectional;
-                            return conn;
+                            if (ShouldMergeOppositeConnections)
+                            {
+                                //Update current connection to Bidirectional
+                                conn.Direction = NodeConnectionDirection.Bidirectional;
+                                return conn;
+                            }
                         }
+
                         break;
                     }
                     case NodeConnectionDirection.Bidirectional
@@ -154,7 +165,7 @@ namespace LegendaryTools.GraphV2
                 }
             }
 
-            NodeConnection connection = new NodeConnection(this, to, newDirection);
+            INodeConnection connection = ConstructConnection(this, to, newDirection);
             Connections.Add(connection);
             to.Connections.Add(connection);
             return connection;
@@ -180,12 +191,22 @@ namespace LegendaryTools.GraphV2
 
                 switch (conn.Direction)
                 {
-                    case NodeConnectionDirection.Unidirectional: if (isSameNodes) return conn; break;
-                    case NodeConnectionDirection.Bidirectional: if (isSameNodes || isInversedNode) return conn; break;
+                    case NodeConnectionDirection.Unidirectional:
+                        if (isSameNodes) return conn;
+                        break;
+                    case NodeConnectionDirection.Bidirectional:
+                        if (isSameNodes || isInversedNode) return conn;
+                        break;
                 }
             }
 
             return null;
+        }
+
+        protected virtual INodeConnection ConstructConnection(INode fromNode, INode toNode,
+            NodeConnectionDirection direction)
+        {
+            return new NodeConnection(fromNode, toNode, direction);
         }
 
         void INode.SetOwner(IGraph owner)

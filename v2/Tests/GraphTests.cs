@@ -20,12 +20,12 @@ namespace LegendaryTools.GraphV2.Tests
         public void Setup()
         {
             graph = new Graph();
-            nodeA = new Node();
-            nodeB = new Node();
-            nodeC = new Node();
-            nodeD = new Node();
-            nodeE = new Node();
-            nodeF = new Node();
+            nodeA = new Node(true);
+            nodeB = new Node(true);
+            nodeC = new Node(true);
+            nodeD = new Node(true);
+            nodeE = new Node(true);
+            nodeF = new Node(true);
         }
 
         [Test]

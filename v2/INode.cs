@@ -5,6 +5,7 @@ namespace LegendaryTools.GraphV2
     public interface INode
     {
         public string Id { get; set; } //Guid
+        bool ShouldMergeOppositeConnections { get; }
         INode[] Neighbours { get; }
         IGraph Owner { get; }
         List<INodeConnection> Connections { get; }
