@@ -74,11 +74,11 @@ namespace LegendaryTools.GraphV2
         /// Disconnects this node from all parents. Removes the connection and updates
         /// ChildNodes and ParentNodes for each parent accordingly.
         /// </summary>
-        public void DisconnectFromParents()
+        public virtual void DisconnectFromParents()
         {
             // Make a copy to avoid iteration issues while removing
-            var parentsCopy = ParentNodes.ToArray();
-            foreach (var parent in parentsCopy)
+            IMultiParentTreeNode[] parentsCopy = ParentNodes.ToArray();
+            foreach (IMultiParentTreeNode parent in parentsCopy)
             {
                 DisconnectFromParent(parent);
             }
@@ -88,17 +88,14 @@ namespace LegendaryTools.GraphV2
         /// Disconnects this node from a specific parent.
         /// </summary>
         /// <param name="parentNode">The parent node to disconnect from.</param>
-        public void DisconnectFromParent(IMultiParentTreeNode parentNode)
+        public virtual void DisconnectFromParent(IMultiParentTreeNode parentNode)
         {
             if (parentNode == null) return;
             if (!ParentNodes.Contains(parentNode)) return;
 
             // Look for the unidirectional connection parent->this
             INodeConnection conn = parentNode.FindConnectionBetweenNodes(parentNode, this);
-            if (conn != null)
-            {
-                conn.Disconnect();
-            }
+            conn?.Disconnect();
 
             // Remove references from both sides
             ParentNodes.Remove(parentNode);

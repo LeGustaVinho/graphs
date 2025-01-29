@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace LegendaryTools.GraphV2
 {
@@ -40,7 +39,7 @@ namespace LegendaryTools.GraphV2
                     return 0;
 
                 int maxWidth = 0;
-                var queue = new Queue<IMultiParentTreeNode>();
+                Queue<IMultiParentTreeNode> queue = new Queue<IMultiParentTreeNode>();
                 queue.Enqueue(RootNode);
 
                 while (queue.Count > 0)
@@ -50,8 +49,8 @@ namespace LegendaryTools.GraphV2
 
                     for (int i = 0; i < levelCount; i++)
                     {
-                        var current = queue.Dequeue();
-                        foreach (var child in current.ChildNodes)
+                        IMultiParentTreeNode current = queue.Dequeue();
+                        foreach (IMultiParentTreeNode child in current.ChildNodes)
                         {
                             queue.Enqueue(child);
                         }
@@ -128,11 +127,11 @@ namespace LegendaryTools.GraphV2
             }
 
             // Gather the node and all its descendants
-            var toRemove = new List<IMultiParentTreeNode>();
+            List<IMultiParentTreeNode> toRemove = new List<IMultiParentTreeNode>();
             CollectSubtreeNodes(node, toRemove);
 
             // Physically remove them from the graph
-            foreach (var n in toRemove)
+            foreach (IMultiParentTreeNode n in toRemove)
             {
                 // Disconnect the node from its parents (removes the reference in their ChildNodes)
                 n.DisconnectFromParents();
@@ -169,16 +168,16 @@ namespace LegendaryTools.GraphV2
         {
             if (RootNode == null) return null;
 
-            var queue = new Queue<IMultiParentTreeNode>();
+            Queue<IMultiParentTreeNode> queue = new Queue<IMultiParentTreeNode>();
             queue.Enqueue(RootNode);
 
             while (queue.Count > 0)
             {
-                var current = queue.Dequeue();
+                IMultiParentTreeNode current = queue.Dequeue();
                 if (predicate(current))
                     return current;
 
-                foreach (var child in current.ChildNodes)
+                foreach (IMultiParentTreeNode child in current.ChildNodes)
                 {
                     queue.Enqueue(child);
                 }
@@ -192,7 +191,7 @@ namespace LegendaryTools.GraphV2
         /// </summary>
         public List<IMultiParentTreeNode> DepthFirstTraverse()
         {
-            var visited = new List<IMultiParentTreeNode>();
+            List<IMultiParentTreeNode> visited = new List<IMultiParentTreeNode>();
             if (RootNode == null) return visited;
 
             DepthFirstTraverseRecursive(RootNode, visited);
@@ -204,18 +203,18 @@ namespace LegendaryTools.GraphV2
         /// </summary>
         public List<IMultiParentTreeNode> HeightFirstTraverse()
         {
-            var visited = new List<IMultiParentTreeNode>();
+            List<IMultiParentTreeNode> visited = new List<IMultiParentTreeNode>();
             if (RootNode == null) return visited;
 
-            var queue = new Queue<IMultiParentTreeNode>();
+            Queue<IMultiParentTreeNode> queue = new Queue<IMultiParentTreeNode>();
             queue.Enqueue(RootNode);
 
             while (queue.Count > 0)
             {
-                var current = queue.Dequeue();
+                IMultiParentTreeNode current = queue.Dequeue();
                 visited.Add(current);
 
-                foreach (var child in current.ChildNodes)
+                foreach (IMultiParentTreeNode child in current.ChildNodes)
                 {
                     if (!visited.Contains(child))
                     {
@@ -238,7 +237,7 @@ namespace LegendaryTools.GraphV2
                 return 1; // Leaf has height 1
 
             int maxChildHeight = 0;
-            foreach (var child in node.ChildNodes)
+            foreach (IMultiParentTreeNode child in node.ChildNodes)
             {
                 int childHeight = GetHeight(child);
                 if (childHeight > maxChildHeight)
@@ -255,9 +254,9 @@ namespace LegendaryTools.GraphV2
             if (predicate(current))
                 return current;
 
-            foreach (var child in current.ChildNodes)
+            foreach (IMultiParentTreeNode child in current.ChildNodes)
             {
-                var result = DFS(child, predicate);
+                IMultiParentTreeNode result = DFS(child, predicate);
                 if (result != null)
                     return result;
             }
@@ -273,7 +272,7 @@ namespace LegendaryTools.GraphV2
             if (!collector.Contains(node))
                 collector.Add(node);
 
-            foreach (var child in node.ChildNodes)
+            foreach (IMultiParentTreeNode child in node.ChildNodes)
             {
                 CollectSubtreeNodes(child, collector);
             }
@@ -285,7 +284,7 @@ namespace LegendaryTools.GraphV2
         private void DepthFirstTraverseRecursive(IMultiParentTreeNode node, List<IMultiParentTreeNode> visited)
         {
             visited.Add(node);
-            foreach (var child in node.ChildNodes)
+            foreach (IMultiParentTreeNode child in node.ChildNodes)
             {
                 if (!visited.Contains(child))
                 {
